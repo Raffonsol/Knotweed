@@ -1,0 +1,258 @@
+
+// the following is an exhibit from when I was trying to generate leaves by drawing them in the canvas with bezierCurveTo
+// and It worked amazingly and I could do different kinds of leaves and everything but then I went on to adding a script to
+// rotating them and it was a shit show. I tried rotating the canvas but it offset their position. So I tried moving them to position
+// 0, 0 and then rotating the canvas and movign them back, didn't work. Tried setting them to the middle and then rotating but there
+// was just no combination of order of operations that worked and I kept having to call restore cause rotating messes up with
+// things that are drawn... Anyways so I moved on to applying the mathematical formula x2 = x1 * cosL - y1 * sinL to plot the leaves
+// in an already rotated position. Theoretically this should have worked, but it was like flipping the shape instead of rotating it.
+// when I rotated by 90 degrees it flipped horizontally, 180 flipped it vertically, derees in between this would just deform it...
+// I'm sure there is a fatal flaw in the way I was doing it somehow, I suspect it had something to do with the way bezierCurves are drawn...
+// So I'm leaving it here cause one day I'll be a pro at this stuff and I'll go back to drawing my own leaves instead of using little
+// pics like a loser
+
+// this is what a leaf would be rather than a stinking png
+var leafMap = [
+    [75, 10],
+    [75, 37, 70, 25, 50, 35],
+    [30, 40, 30, 62.5, 30, 62.5],
+    [30, 80, 40, 102, 75, 130],
+    [110, 102, 120, 80, 120, 62.5],
+    [120, 62.5, 120, 40, 100, 35],
+    [85, 25, 75, 37, 75, 10]
+];
+
+var heartMap = [
+    [75, 40],
+    // x,y,x,y,x,y
+    [75, 37, 70, 25, 50, 25],
+    [20, 25, 20, 62.5, 20, 62.5],
+    [20, 80, 40, 102, 75, 120],
+    [110, 102, 130, 80, 130, 62.5],
+    [130, 62.5, 130, 25, 100, 25],
+    [85, 25, 75, 37, 75, 40]
+];
+
+// this version shows the variations isntead of
+// the positions so this was used to generate
+// leaves dynamically in any position.
+var leafFMap = [
+    [0, -30],
+    [0, -3, -5, -15, -25, -5],
+
+    [-45, 0, -45, 22.5, -45, 22.5],
+
+    [-45, 40, -35, 62, 0, 90],
+
+    [35, 62, 45, 40, 45, 22.5],
+
+    [45, 22.5, 45, 0, 25, -5],
+
+    [10, -15, 0, -3, 0, -30],
+];
+
+function createaFoliage(x, y, rad, color, dir, map) {
+    rad *= 0.05;
+
+    canvas.ctx.save();
+
+    // when I was trying to rotate... Embarrassing
+    // if (Math.random() > 0.5) {
+    //     canvas.ctx.rotate(40 * Math.PI / 180);
+    // }
+
+// this I used to make the little maps that u see up above (the one with an F in the middle of the name)
+    // if u uncomment this just remember to make a map variable and
+    // initialize it with 7 empty arrays (array of arrays)
+    // console.log(map[6][0], map[0][0]);
+    // for (let i = 1; i < map.length; i++) {
+    //
+    //     for (let j = 0; j < map[i].length; j++) {
+    //
+    //         var change = 0;
+    //         if (j % 2 == 0) {
+    //             //pair // x
+    //             if (map[i][j] !== map[0][0]) {
+    //                 change = map[i][j] - map[0][0];
+    //
+    //             }
+    //         } else {
+    //             //odd // y
+    //             if (map[i][j] !== map[0][1]) {
+    //                 change = map[i][j] - map[0][1];
+    //
+    //             }
+    //         }
+    //
+    //         heartFMap[i].push(change);
+    //
+    //     }
+    // }
+    // console.dir(heartFMap);
+    // map[0][0] = x;
+    // map[0][1] = y;
+    // console.log(canvas.ctx.positionX,canvas.ctx.positionY);
+    // canvas.ctx.rotate(320 * Math.PI / 180);
+    // canvas.ctx.translate(canvas.width ,  canvas.height);
+    // console.log(canvas.ctx.positionX,canvas.ctx.positionY);
+
+
+// buncha garbage im not even gonna try to explain just look at the code
+    // canvas.ctx.moveTo(x + map[0][0] * rad, y + map[0][1] * rad);
+    // canvas.ctx.moveTo(canvas.WIDTH/2, canvas.HEIGHT/2);
+    // canvas.ctx.translate(canvas.WIDTH/2, canvas.HEIGHT/2);
+
+    // radians conversion -- a thing
+    var rotation = dir * Math.PI /180;
+    // canvas.ctx.rotate(rotation);
+    // some more rotation cause like i said i tried every order of operations in this garb
+// rotation = Math.random() >0.5 ? rotation : 0;
+    //
+    // yeah this is a thing I'm sure I will encounter more in my life
+    // canvas.ctx.save();
+
+    // canvas.ctx.translate(x, y);
+    canvas.ctx.beginPath();
+    // little did me know how frigging canvas worked
+    // canvas.ctx.moveTo(x + map[0][0] * rad, y +  map[0][1] * rad);
+
+    // aaaaaaand behold the stress of 2 whole days
+    // this is what plots the leaf... It didn't always call those getNewXYPos things
+    // that is for my latest attempt to plot the dots in the position they would be after
+    // a rotation is applied instead of just plotting them and then rotating somehow.
+    // I'm like positive that this would work better if it wasnt the bezier curving thing
+    // but i did try using moveTo as well (although not very much) and it didnt fix it
+    for (let i = 1; i < map.length; i++) {
+        canvas.ctx.bezierCurveTo(
+            getNewXPos(x + map[i][0] * rad, y + map[i][0] * rad, x, y, rotation),
+            getNewYPos(x + map[i][1] * rad, y + map[i][1] * rad, x, y, rotation),
+            getNewXPos(x + map[i][2] * rad, y + map[i][2] * rad, x, y, rotation),
+            getNewYPos(x + map[i][3] * rad, y + map[i][3] * rad, x, y, rotation),
+            getNewXPos(x + map[i][4] * rad, y + map[i][4] * rad, x, y, rotation),
+            getNewYPos(x + map[i][5] * rad, y + map[i][5] * rad, x, y, rotation),
+        )
+    }
+// console.log (getNewYPos(6 , 6, 1, 1, 90) , getNewYPos(6 , 6, 1, 1, 0));
+    canvas.ctx.restore();
+    // canvas.ctx.position = {x: 0, y: 0};
+    canvas.ctx.fillStyle = color;
+
+    canvas.ctx.fill();
+    canvas.ctx.restore();
+    // canvas.ctx.rotate(40 * Math.PI / 180);
+
+
+    circle(x, y, 1, 'blue');
+}
+
+function getNewXPos(oldx, oldy, pivotX, pivotY, angle) {
+    var s = Math.sin(angle); // 0.99999999999
+    var c = Math.cos(angle); // -0.0000036732
+
+    // console.log('1', oldx, oldy);
+    var neutralx = oldx - pivotX;
+    var neutraly = oldy - pivotY;
+    // console.log('2', oldx, oldy);
+    var result = neutralx * c - neutraly * s;
+
+    // console.log('\nA', oldx, '\nB', result + pivotX);
+    if (angle===0)console.log('x0',oldx, result + pivotX);
+    else console.log('x90',oldx, result + pivotX);
+    return result + pivotX;
+}
+
+function getNewYPos(oldx, oldy, pivotX, pivotY, angle) {
+    var s = Math.sin(angle);
+    var c = Math.cos(angle);
+
+
+    var neutralx = oldx - pivotX;
+    var neutraly = oldy - pivotY;
+
+    var result = neutralx * s + neutraly * c;
+    if (angle===0)console.log('y0',oldy, result + pivotY);
+    else console.log('y90',oldy, result + pivotY);
+    return result + pivotY;
+}
+
+function createShape(x, y, rad, color, dir, map) {
+    // canvas.ctx.save();
+    // canvas.ctx.translate(-75, -10);
+    // canvas.ctx.rotate(dir);
+
+    canvas.ctx.beginPath();
+    canvas.ctx.moveTo(map[0][0], map[0][1]);
+    for (let i = 1; i < map.length; i++) {
+        canvas.ctx.bezierCurveTo(map[i][0], map[i][1], map[i][2], map[i][3], map[i][4], map[i][5]);
+    }
+    canvas.ctx.fill();
+
+
+    // circle(75, 40, 1, 'blue');
+
+    // canvas.ctx.restore();
+    // canvas.ctx.fillStyle = color;
+
+
+}
+
+// And this is how it all started
+function createLeaf(x, y, rad, color, dir) {
+    canvas.ctx.beginPath();
+    // canvas.ctx.moveTo(75, 40);
+    rad *= 0.05;
+    // rad+=dir;
+    canvas.ctx.moveTo(x, y - 30 * rad);
+    canvas.ctx.bezierCurveTo(x, y - 3 * rad, x - 5 * rad, y - 15 * rad, x - 15 * rad, y - 25 * rad);
+    canvas.ctx.bezierCurveTo(x - 65 * rad, y - 30 * rad, x - 65 * rad, y + 22.5 * rad, x - 65 * rad, y + 22.5 * rad);
+    canvas.ctx.bezierCurveTo(x - 65 * rad, y + 40 * rad, x - 35 * rad, y + 62 * rad, x, y + 90 * rad);
+    canvas.ctx.bezierCurveTo(x + 35 * rad, y + 62 * rad, x + 65 * rad, y + 40 * rad, x + 65 * rad, y + 22.5 * rad);
+    canvas.ctx.bezierCurveTo(x + 65 * rad, y + 22.5 * rad, x + 65 * rad, y, x + 25 * rad, y - 5 * rad);
+    canvas.ctx.bezierCurveTo(x - 10 * rad, y - 15 * rad, x, y - 3 * rad, x, y - 30 * rad);
+
+
+    canvas.ctx.moveTo(75, 10);
+    canvas.ctx.bezierCurveTo(75, 37, 70, 25, 50, 35);
+    canvas.ctx.bezierCurveTo(30, 40, 30, 62.5, 30, 62.5);
+    canvas.ctx.bezierCurveTo(30, 80, 40, 102, 75, 130);
+    canvas.ctx.bezierCurveTo(110, 102, 120, 80, 120, 62.5);
+    canvas.ctx.bezierCurveTo(120, 62.5, 120, 40, 100, 35);
+    canvas.ctx.bezierCurveTo(85, 25, 75, 37, 75, 10);
+
+
+    canvas.ctx.fill();
+    canvas.ctx.fillStyle = color;
+    // canvas.ctx.rotate(dir * Math.PI);
+}
+
+//actually this is how it technically all started and this worked as intended it was just too lame
+function foliage(x, y, rad, color, dir) {
+    canvas.ctx.save(); // save state
+    canvas.ctx.beginPath();
+
+    var rotation = dir;
+
+    if (tg.settings.downyLeaves) {
+        rotation = Math.random() * tg.settings.downyCoefficient - tg.settings.downyCoefficient / 2;
+    }
+
+    canvas.ctx.translate(1, 0);
+    canvas.ctx.scale(1, 1);
+    tg.settings.thins
+        ?
+        canvas.ctx.ellipse(x, y, rad * tg.settings.leafSize, rad * tg.settings.leafSize, rotation + 3, 1, 2, false)
+        :
+        // canvas.ctx.ellipse(x, y, Math.sqrt(rad) * tg.settings.leafSize, Math.sqrt(rad) * 5 * tg.settings.leafSize, rotation, 0, Math.PI, false);
+        canvas.ctx.ellipse(x, y, Math.sqrt(rad) * tg.settings.leafSize, Math.sqrt(rad) * 5 * tg.settings.leafSize, rotation, 0, Math.PI, false);
+
+    canvas.ctx.restore(); // restore to original state
+    canvas.ctx.strokeStyle = color;
+    canvas.ctx.stroke();
+}
+
+
+// im leaving all this out for now but it was so much work and so much testing leaves growing in so many ways. and watching videos
+// explaining mathematical concepts around rotation, seeing billions of code samples that do something similar but not quite as
+// complicated. I even asked help from a coworker who has a math major and he helped me find the right formulas to use. Thanks Dominic.
+// anyways I know I didn't comment everything but no matter how much comments this will still be hard to wrap your head around you so
+// I give you da code. Good luck Ricardo from the future or some saint in gitHub.

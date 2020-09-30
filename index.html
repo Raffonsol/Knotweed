@@ -1,0 +1,143 @@
+<!DOCTYPE html>
+<head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
+    <link rel="apple-touch-icon" href="https://aurbano.eu/assets/files/touch-icon.png">
+    <link rel="apple-touch-icon" sizes="72x72" href="https://aurbano.eu/assets/files/touch-icon-72.png">
+    <link rel="apple-touch-icon" sizes="114x114" href="https://aurbano.eu/assets/files/touch-icon-114.png">
+
+    <title>Knotweed</title>
+
+</head>
+<style type="text/css">
+    body {
+        margin: 0;
+        padding: 0;
+        background: #000;
+        position: relative;
+        color: #FFF;
+        font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
+    }
+
+    a {
+        color: inherit;
+        text-decoration: none;
+    }
+
+    a:hover {
+        text-decoration: underline;
+    }
+
+    .rectangle {
+        height: 20px;
+        width: 80px;
+        background-color: #555;
+        border-bottom: 2px solid black;
+    }
+
+    .trapezoid {
+        border-top: 50px solid #555;
+        border-left: 15px solid transparent;
+        border-right: 15px solid transparent;
+        height: 0;
+        width: 35px;
+    }
+
+    .pot {
+        margin: auto;
+        margin-top: -10px;
+        display: block;
+    }
+
+    .cube {
+
+        width: 250px;
+        height: 300%;
+        display: inline-block;
+        border: 1px solid white;
+        /*background-color: #0099FF;*/
+    }
+    .plantMenu {
+        right: 0;
+        float: right;
+        display: inline-block;
+        width: 250px;
+        height: 100%;
+        position: fixed;
+        background: cadetblue;
+
+    }
+</style>
+
+<body>
+<div class="plantMenu">
+    <div class="rectangle" id="plant">plant name</div>
+</div>
+<div class="cube">
+    <canvas width="250%" height="300%" id="bg0" style="color:#09F"></canvas>
+    <div class="rectangle pot"></div>
+    <div class="trapezoid pot"></div>
+
+</div>
+<div class="cube">
+    <canvas width="250%" height="300%" id="bg1" style="color:#09F"></canvas>
+    <div class="rectangle pot"></div>
+    <div class="trapezoid pot"></div>
+
+</div>
+<div class="cube">
+    <canvas width="250%" height="300%" id="bg2" style="color:#09F"></canvas>
+    <div class="rectangle pot"></div>
+    <div class="trapezoid pot"></div>
+
+</div>
+<div class="cube">
+    <canvas width="250%" height="300%" id="bg3" style="color:#09F"></canvas>
+    <div class="rectangle pot"></div>
+    <div class="trapezoid pot"></div>
+
+</div>
+<br>
+<div class="cube">
+    <canvas width="250%" height="300%" id="bg4" style="color:#09F"></canvas>
+    <div class="rectangle pot"></div>
+    <div class="trapezoid pot"></div>
+
+</div>
+<div class="cube">
+    <canvas width="250%" height="300%" id="bg5" style="color:#09F"></canvas>
+    <div class="rectangle pot"></div>
+    <div class="trapezoid pot"></div>
+
+</div>
+<div class="cube">
+    <canvas width="250%" height="300%" id="bg6" style="color:#09F"></canvas>
+    <div class="rectangle pot"></div>
+    <div class="trapezoid pot"></div>
+
+</div>
+<div class="cube">
+    <canvas width="250%" height="300%" id="bg7" style="color:#09F"></canvas>
+    <div class="rectangle pot"></div>
+    <div class="trapezoid pot"></div>
+
+</div>
+
+<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.2.1/jquery.min.js"></script>
+<script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/dat-gui/0.6.5/dat.gui.min.js"></script>
+<script type="text/javascript" src="src/TreeGenerator.js"></script>
+<script type="text/javascript" src="src/GameOverlord.js"></script>
+<script type="text/javascript" src="src/confs.js"></script>
+<script type="text/javascript">
+    $(document).ready(function () {
+		for (let i = 0; i < 11; i++) {
+		    var set = null;
+
+            var canvas = $('#bg'+i);
+			var tree = new TreeGenerator(canvas, configurationExamples[i], set,);
+			tree.start();
+		}
+    });
+</script>
+
+</body>
+

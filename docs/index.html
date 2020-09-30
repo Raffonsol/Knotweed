@@ -1,0 +1,270 @@
+<!DOCTYPE html>
+<head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
+    <link rel="shortcut icon" href="https://aurbano.eu/assets/files/favicon.ico">
+    <link rel="apple-touch-icon" href="https://aurbano.eu/assets/files/touch-icon.png">
+    <link rel="apple-touch-icon" sizes="72x72" href="https://aurbano.eu/assets/files/touch-icon-72.png">
+    <link rel="apple-touch-icon" sizes="114x114" href="https://aurbano.eu/assets/files/touch-icon-114.png">
+
+    <title>Tree Generator - Alejandro U. Alvarez</title>
+
+    <style type="text/css">
+        body {
+            margin: 0;
+            padding: 0;
+            background: #000;
+            position: relative;
+            color: #FFF;
+            font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
+        }
+
+        a {
+            color: inherit;
+            text-decoration: none;
+        }
+
+        a:hover {
+            text-decoration: underline;
+        }
+
+        .rectangle {
+            height: 20px;
+            width: 80px;
+            background-color: #555;
+            border-bottom: 2px solid black;
+        }
+
+        .trapezoid {
+            border-top: 50px solid #555;
+            border-left: 15px solid transparent;
+            border-right: 15px solid transparent;
+            height: 0;
+            width: 35px;
+        }
+
+        .pot {
+            margin: auto;
+            display: block;
+        }
+
+        .cube {
+            width: 250px;
+            height: 300%;
+            display: inline-block;
+            border: 1px solid white;
+            /*background-color: #0099FF;*/
+        }
+    </style>
+</head>
+
+<body>
+
+<div class="cube">
+    <canvas width="250%" height="300%" id="bg1" style="color:#09F"></canvas>
+    <div class="rectangle pot"></div>
+    <div class="trapezoid pot"></div>
+</div>
+<div class="cube">
+    <canvas width="250%" height="300%" id="bg2" style="color:#09F"></canvas>
+    <div class="rectangle pot"></div>
+    <div class="trapezoid pot"></div>
+</div>
+<div class="cube">
+    <canvas width="250%" height="300%" id="bg3" style="color:#09F"></canvas>
+    <div class="rectangle pot"></div>
+    <div class="trapezoid pot"></div>
+</div>
+<div class="cube">
+	<canvas width="250%" height="300%" id="bg4" style="color:#09F"></canvas>
+	<div class="rectangle pot"></div>
+	<div class="trapezoid pot"></div>
+</div>
+<div class="cube">
+	<canvas width="250%" height="300%" id="bg5" style="color:#09F"></canvas>
+	<div class="rectangle pot"></div>
+	<div class="trapezoid pot"></div>
+</div>
+<div class="cube">
+	<canvas width="250%" height="300%" id="bg6" style="color:#09F"></canvas>
+	<div class="rectangle pot"></div>
+	<div class="trapezoid pot"></div>
+</div><div class="cube">
+	<canvas width="250%" height="300%" id="bg7" style="color:#09F"></canvas>
+	<div class="rectangle pot"></div>
+	<div class="trapezoid pot"></div>
+</div>
+<div class="cube">
+	<canvas width="250%" height="300%" id="bg8" style="color:#09F"></canvas>
+	<div class="rectangle pot"></div>
+	<div class="trapezoid pot"></div>
+</div>
+<div class="cube">
+	<canvas width="250%" height="300%" id="bg9" style="color:#09F"></canvas>
+	<div class="rectangle pot"></div>
+	<div class="trapezoid pot"></div>
+</div>
+
+<div class="cube">
+	<canvas width="250%" height="300%" id="bg10" style="color:#09F"></canvas>
+	<div class="rectangle pot"></div>
+	<div class="trapezoid pot"></div>
+</div>
+
+
+
+<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.2.1/jquery.min.js"></script>
+<script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/dat-gui/0.6.5/dat.gui.min.js"></script>
+<script type="text/javascript" src="src/TreeGenerator.js"></script>
+<script type="text/javascript">
+    $(document).ready(function () {
+		for (let i = 1; i < 11; i++) {
+		    var set = null;
+                if (i===2)
+		        set = {
+                    upwardTendency: 0.12,  // how abruptly the branches will tend upward but it kinda affects the speed the branch grows too so its jenk
+                    branchStrengthAfterTrunkDeath: 0.2, // between 0.1 and 0.3 I would recommend
+                    heightBeforeBranchingBasedOnWidth: 0,
+                    heightBeforeBranchingBasedOnHeight: 40,
+                    lifeBeforeLeafing: 20,
+                    loss: 0.02, // Width loss per cycle
+                    baseLoss: 0.0002, // Width loss per cycle
+                    minSleep: 10, // Min sleep time (For the animation)
+                    branchLoss: 0.6, // % width maintained for branches
+                    mainLoss: 0.9, // % width maintained after branching
+                    speed: 0.25, // Movement speed
+                    newBranch: 0.25, // Chance of not starting a new branch
+                    leaves: 0.85, // Chance of not starting a new leaf
+                    leafSize: 1.5, // multiplier so go easy
+                    downyLeaves: false,
+                    downyCoefficient: 3.5,
+                    treeColor: 'rgba(230, 193, 180, 1)',
+                    leafColor: 'rgba(255,25,0,1)',
+
+
+
+                    fastMode: false, // Fast growth mode
+                    fadeOut: false, // Fade slowly to black
+                    fadeAmount: 0.05, // How much per iteration
+                    autoSpawn: false, // Automatically create trees
+                    spawnInterval: 250, // Spawn interval in ms
+                    fadeInterval: 250, // Fade interval in ms
+                    initialWidth: 5, // Initial branch width
+                    indicateNewBranch: true, // Display a visual indicator when a new branch is born
+                    fitScreen: false, // Resize canvas to fit screen,
+                    bgColor: [0, 0, 0]
+                };
+
+            if (i===3)
+                set = {
+                    upwardTendency: 0.02,  // how abruptly the branches will tend upward but it kinda affects the speed the branch grows too so its jenk
+                    branchStrengthAfterTrunkDeath: 0.26, // between 0.1 and 0.3 I would recommend
+                    heightBeforeBranchingBasedOnWidth: 4,
+                    heightBeforeBranchingBasedOnHeight: 10,
+                    lifeBeforeLeafing: 20,
+                    loss: 0.002, // Width loss per cycle
+                    baseLoss: 0.02, // Width loss per cycle
+                    minSleep: 10, // Min sleep time (For the animation)
+                    branchLoss: 0.6, // % width maintained for branches
+                    mainLoss: 0.8, // % width maintained after branching
+                    speed: 0.55, // Movement speed
+                    newBranch: 0.65, // Chance of not starting a new branch
+                    leaves: 0.90, // Chance of not starting a new leaf
+                    leafSize: 2.3, // multiplier so go easy
+                    downyLeaves: true,
+                    downyCoefficient: 1.5,
+                    treeColor: 'rgba(20, 183, 10, 1)',
+                    leafColor: 'rgba(155,255,0,1)',
+
+                    fastMode: false, // Fast growth mode
+                    fadeOut: false, // Fade slowly to black
+                    fadeAmount: 0.05, // How much per iteration
+                    autoSpawn: false, // Automatically create trees
+                    spawnInterval: 250, // Spawn interval in ms
+                    fadeInterval: 250, // Fade interval in ms
+                    initialWidth: 5, // Initial branch width
+                    indicateNewBranch: true, // Display a visual indicator when a new branch is born
+                    fitScreen: false, // Resize canvas to fit screen,
+                    bgColor: [0, 0, 0]
+                };
+
+            if (i===4)
+                set = {
+                    upwardTendency: 0.5,  // how abruptly the branches will tend upward but it kinda affects the speed the branch grows too so its jenk
+                    branchStrengthAfterTrunkDeath: 0.5, // between 0.1 and 0.3 I would recommend
+                    heightBeforeBranchingBasedOnWidth: 0,
+                    heightBeforeBranchingBasedOnHeight: 19,
+                    lifeBeforeLeafing: 10,
+                    loss: 0.02, // Width loss per cycle
+                    baseLoss: 0.0001, // Width loss per cycle
+                    minSleep: 1, // Min sleep time (For the animation)
+                    branchLoss: 0.74, // % width maintained for branches
+                    mainLoss: 0.84, // % width maintained after branching
+                    speed: 0.95, // Movement speed
+                    newBranch: 0.45, // Chance of not starting a new branch
+                    leaves: 0.95, // Chance of not starting a new leaf
+                    leafSize: 0.5, // multiplier so go easy
+                    downyLeaves: true,
+                    downyCoefficient: 6.5,
+                    treeColor: 'rgba(250, 13, 80, 1)',
+                    leafColor: 'rgba(244,255,22,1)',
+
+                    // colorful: true, // Use colors for new trees
+                    fastMode: false, // Fast growth mode
+                    fadeOut: false, // Fade slowly to black
+                    fadeAmount: 0.05, // How much per iteration
+                    autoSpawn: false, // Automatically create trees
+                    spawnInterval: 250, // Spawn interval in ms
+                    fadeInterval: 250, // Fade interval in ms
+                    initialWidth: 5, // Initial branch width
+                    indicateNewBranch: true, // Display a visual indicator when a new branch is born
+                    fitScreen: false, // Resize canvas to fit screen,
+                    bgColor: [0, 0, 0]
+                };
+
+            if (i===5)
+                set = {
+                    upwardTendency: 0.0005,  // how abruptly the branches will tend upward but it kinda affects the speed the branch grows too so its jenk
+                    branchStrengthAfterTrunkDeath: 0.2, // between 0.1 and 0.3 I would recommend
+                    heightBeforeBranchingBasedOnWidth: 0,
+                    heightBeforeBranchingBasedOnHeight: 59,
+                    lifeBeforeLeafing: 40,
+                    loss: 0.09, // Width loss per cycle
+                    baseLoss: 0.00009, // Width loss per cycle
+                    minSleep: 0, // Min sleep time (For the animation)
+                    branchLoss: 0.6, // % width maintained for branches
+                    mainLoss: 0.99, // % width maintained after branching
+                    speed: 0, // Movement speed
+                    newBranch: 0.45, // Chance of not starting a new branch
+                    leaves: 0.85, // Chance of not starting a new leaf
+                    leafSize: 3.5, // multiplier so go easy
+                    downyLeaves: true,
+                    downyCoefficient: 3.5,
+                    treeColor: 'rgba(42, 43, 40, 1)',
+                    leafColor: 'rgba(225,215,221,1)',
+                    initialWidth: 1, // Initial branch width
+                    leafType: 'mushroom',
+
+                    // colorful: true, // Use colors for new trees
+                    fastMode: false, // Fast growth mode
+                    fadeOut: false, // Fade slowly to black
+                    fadeAmount: 0.05, // How much per iteration
+                    autoSpawn: false, // Automatically create trees
+                    spawnInterval: 250, // Spawn interval in ms
+                    fadeInterval: 250, // Fade interval in ms
+                    indicateNewBranch: true, // Display a visual indicator when a new branch is born
+                    fitScreen: false, // Resize canvas to fit screen,
+                    bgColor: [0, 0, 0]
+                };
+
+
+            var canvas = $('#bg'+i);
+			var tree = new TreeGenerator(canvas, {
+				fitScreen: false,
+			}, set,);
+			tree.start();
+		}
+    });
+</script>
+
+</body>
+</html>
