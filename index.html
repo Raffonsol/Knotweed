@@ -56,6 +56,7 @@
         border: 1px solid white;
         /*background-color: #0099FF;*/
     }
+
     .plantMenu {
         right: 0;
         float: right;
@@ -66,62 +67,85 @@
         background: cadetblue;
 
     }
+    #gameBox {
+        display: flex;
+        flex-direction: row;
+    }
 </style>
 
 <body>
 <div class="plantMenu">
-    <div class="rectangle" id="plant">plant name</div>
-</div>
-<div class="cube">
-    <canvas width="250%" height="300%" id="bg0" style="color:#09F"></canvas>
-    <div class="rectangle pot"></div>
-    <div class="trapezoid pot"></div>
-
-</div>
-<div class="cube">
-    <canvas width="250%" height="300%" id="bg1" style="color:#09F"></canvas>
-    <div class="rectangle pot"></div>
-    <div class="trapezoid pot"></div>
-
-</div>
-<div class="cube">
-    <canvas width="250%" height="300%" id="bg2" style="color:#09F"></canvas>
-    <div class="rectangle pot"></div>
-    <div class="trapezoid pot"></div>
-
-</div>
-<div class="cube">
-    <canvas width="250%" height="300%" id="bg3" style="color:#09F"></canvas>
-    <div class="rectangle pot"></div>
-    <div class="trapezoid pot"></div>
-
-</div>
-<br>
-<div class="cube">
-    <canvas width="250%" height="300%" id="bg4" style="color:#09F"></canvas>
-    <div class="rectangle pot"></div>
-    <div class="trapezoid pot"></div>
-
-</div>
-<div class="cube">
-    <canvas width="250%" height="300%" id="bg5" style="color:#09F"></canvas>
-    <div class="rectangle pot"></div>
-    <div class="trapezoid pot"></div>
-
-</div>
-<div class="cube">
-    <canvas width="250%" height="300%" id="bg6" style="color:#09F"></canvas>
-    <div class="rectangle pot"></div>
-    <div class="trapezoid pot"></div>
-
-</div>
-<div class="cube">
-    <canvas width="250%" height="300%" id="bg7" style="color:#09F"></canvas>
-    <div class="rectangle pot"></div>
-    <div class="trapezoid pot"></div>
-
+    Money: $<span id="money"></span>
+    <br>
+    <br>
+    <div> INVENTORY
+        <div id="inventory"></div>
+    </div>
+    <br>
+    <div> SHOP
+        <div id="shop"></div>
+    </div>
 </div>
 
+<div id="gameBox">
+    <div class="cube" id="cube0">
+        <canvas width="250%" height="300%" id="bg0" style="color:#09F"></canvas>
+        <div class="rectangle pot"></div>
+        <div class="trapezoid pot"></div>
+        Value: <span id="value0">0</span>
+        <button onclick="sell(0)">Sell</button>
+    </div>
+    <div class="cube" id="cube1">
+        <canvas width="250%" height="300%" id="bg1" style="color:#09F"></canvas>
+        <div class="rectangle pot"></div>
+        <div class="trapezoid pot"></div>
+        Value: <span id="value1">0</span>
+        <button onclick="sell(1)">Sell</button>
+    </div>
+    <div class="cube" id="cube2">
+        <canvas width="250%" height="300%" id="bg2" style="color:#09F"></canvas>
+        <div class="rectangle pot"></div>
+        <div class="trapezoid pot"></div>
+        Value: <span id="value2">0</span>
+        <button onclick="sell(2)">Sell</button>
+    </div>
+    <div class="cube" id="cube3">
+        <canvas width="250%" height="300%" id="bg3" style="color:#09F"></canvas>
+        <div class="rectangle pot"></div>
+        <div class="trapezoid pot"></div>
+        Value: <span id="value3">0</span>
+        <button onclick="sell(3)">Sell</button>
+    </div>
+    <br>
+    <div class="cube" id="cube4">
+        <canvas width="250%" height="300%" id="bg4" style="color:#09F"></canvas>
+        <div class="rectangle pot"></div>
+        <div class="trapezoid pot"></div>
+        Value: <span id="value4">0</span>
+        <button onclick="sell(4)">Sell</button>
+    </div>
+    <div class="cube" id="cube5">
+        <canvas width="250%" height="300%" id="bg5" style="color:#09F"></canvas>
+        <div class="rectangle pot"></div>
+        <div class="trapezoid pot"></div>
+        Value: <span id="value5">0</span>
+        <button onclick="sell(5)">Sell</button>
+    </div>
+    <div class="cube" id="cube6">
+        <canvas width="250%" height="300%" id="bg6" style="color:#09F"></canvas>
+        <div class="rectangle pot"></div>
+        <div class="trapezoid pot"></div>
+        Value: <span id="value6">0</span>
+        <button onclick="sell(6)">Sell</button>
+    </div>
+    <div class="cube" id="cube7">
+        <canvas width="250%" height="300%" id="bg7" style="color:#09F"></canvas>
+        <div class="rectangle pot"></div>
+        <div class="trapezoid pot"></div>
+        Value: <span id="value7">0</span>
+        <button onclick="sell(7)">Sell</button>
+    </div>
+</div>
 <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.2.1/jquery.min.js"></script>
 <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/dat-gui/0.6.5/dat.gui.min.js"></script>
 <script type="text/javascript" src="src/TreeGenerator.js"></script>
@@ -129,13 +153,7 @@
 <script type="text/javascript" src="src/confs.js"></script>
 <script type="text/javascript">
     $(document).ready(function () {
-		for (let i = 0; i < 11; i++) {
-		    var set = null;
-
-            var canvas = $('#bg'+i);
-			var tree = new TreeGenerator(canvas, configurationExamples[i], set,);
-			tree.start();
-		}
+        preGame();
     });
 </script>
 

@@ -14,12 +14,11 @@
  * @param {Object} canvas jQuery DOM object for the canvas element
  * @param {Object} opts   Settings array, see default values and explanation below
  */
-var TreeGenerator = function (canvas, opts, settings) {
+var TreeGenerator = function (canvas, opts, settings, potIndex) {
         var trunkWidth = 0;
         var trunkLifeTime = 0;
         var trunkDead = false;
         var tg = {};
-
         // Default settings
         tg.settings = settings ? settings : {
             upwardTendency: 0.12,  // how abruptly the branches will tend upward but it kinda affects the speed the branch grows too so its jenk
@@ -53,18 +52,18 @@ var TreeGenerator = function (canvas, opts, settings) {
             fitScreen: false, // Resize canvas to fit screen,
             bgColor: [0, 0, 0]
         };
+        tg.done = false;
 
         tg.settings = $.extend(tg.settings, opts);
-
         // Initialize the canvas
         var canvas = {
             $el: canvas,
-            ctx: canvas[0].getContext("2d"),
+            ctx: canvas[0] ? canvas[0].getContext("2d") : undefined,
             WIDTH: canvas.width(),
             HEIGHT: canvas.height(),
-            canvasMinX: canvas.offset().left,
+            canvasMinX: canvas.offset() ? canvas.offset().left : undefined,
             canvasMaxX: canvas.canvasMinX + canvas.WIDTH,
-            canvasMinY: canvas.offset().top,
+            canvasMinY: canvas.offset() ? canvas.offset().top : undefined,
             canvasMaxY: canvas.canvasMinY + canvas.HEIGHT
         };
         // Generation intervals
@@ -112,7 +111,7 @@ var TreeGenerator = function (canvas, opts, settings) {
          * @return {void}
          */
         function branch(x, y, dx, dy, w, growthRate, lifetime, branchColor, notFirst) {
-
+            if (!canvas.ctx || tg.done) return;
             // console.log(notFirst);
             canvas.ctx.lineWidth = w - lifetime * (notFirst ? tg.settings.loss : tg.settings.baseLoss);
             canvas.ctx.lineWidth = notFirst ? canvas.ctx.lineWidth * 0.90 : canvas.ctx.lineWidth;
@@ -124,8 +123,12 @@ var TreeGenerator = function (canvas, opts, settings) {
                 trunkWidth = canvas.ctx.lineWidth;
 
                 trunkLifeTime++;
+                gameConfig.values[potIndex] += 0.01;
             }
-if (trunkLifeTime > tg.settings.maxLife) {return;}
+            if (trunkLifeTime > tg.settings.maxLife) {
+                done();
+                return;
+            }
             canvas.ctx.beginPath();
             canvas.ctx.moveTo(x, y);
             // console.log(lifetime, trunkLifeTime, trunkDead);
@@ -183,18 +186,21 @@ if (trunkLifeTime > tg.settings.maxLife) {return;}
             }
         }
 
+        function done() {
+            tg.done = true;
+        }
 
-    function createFoliage(x, y, rad, color, dir, src) {
-        var img = new Image(tg.settings.leafSize* Math.random());
-        img.src = src;
-        img.style.transform = 'rotate(90deg)';
-        img.color = color;
-        img.width = (tg.settings.leafSize)*40* Math.random();
-        // canvas.ctx.save();
-        // canvas.ctx.rotate(1.2);
-        canvas.ctx.style = color;
-        canvas.ctx.drawImage(img, x, y, img.width, img.width);
-    }
+        function createFoliage(x, y, rad, color, dir, src) {
+            var img = new Image(tg.settings.leafSize * Math.random());
+            img.src = src;
+            img.style.transform = 'rotate(90deg)';
+            img.color = color;
+            img.width = (tg.settings.leafSize) * 40 * Math.random();
+            // canvas.ctx.save();
+            // canvas.ctx.rotate(1.2);
+            canvas.ctx.style = color;
+            canvas.ctx.drawImage(img, x, y, img.width, img.width);
+        }
 
 // -------------------------------//
 //       Internal functions       //
@@ -202,8 +208,11 @@ if (trunkLifeTime > tg.settings.maxLife) {return;}
 
 // Clear the canvas
         function clear() {
-            ctx.clearRect(0, 0 - HEIGHT / 2, WIDTH, HEIGHT);
+            done();
+            canvas.ctx.clearRect(0, 0 - canvas.HEIGHT / 2, canvas.WIDTH, canvas.HEIGHT*2);
         }
+
+        tg.clear = () => clear();
 
         /**
          * Draw a circle
@@ -224,6 +233,8 @@ if (trunkLifeTime > tg.settings.maxLife) {return;}
         }
 
         function foliage(x, y, rad, color, dir) {
+            gameConfig.values[potIndex] += 0.001;
+
             canvas.ctx.save(); // save state
             canvas.ctx.beginPath();
 
@@ -237,7 +248,7 @@ if (trunkLifeTime > tg.settings.maxLife) {return;}
             canvas.ctx.scale(1, 1);
             switch (tg.settings.leafType) {
                 case 'mushroom':
-                    canvas.ctx.ellipse(x, y,  tg.settings.leafSize,  tg.settings.leafSize, Math.PI,0 , Math.PI, false);
+                    canvas.ctx.ellipse(x, y, tg.settings.leafSize, tg.settings.leafSize, Math.PI, 0, Math.PI, false);
                     break;
                 case 'thin':
                     canvas.ctx.ellipse(x, y, rad * tg.settings.leafSize, rad * tg.settings.leafSize, rotation + 3, 1, 2, false);
@@ -285,10 +296,6 @@ if (trunkLifeTime > tg.settings.maxLife) {return;}
             canvas.ctx.fillStyle = color;
             // canvas.ctx.rotate(dir * Math.PI);
         }
-
-
-
-
 
 
         /**
