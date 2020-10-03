@@ -16,8 +16,8 @@ var gameConfig = {
 }
 
 var shop = {
-    options: ['Knotweed', 'RedKnotweed', 'Mistyweed', 'Swampweed', 'CherryBlossom', 'DesertWeed', 'Bamboo'];
-    prices: [0.10,         0.60,          1.20,        2.00,        5.00,            2.90,         0.30];
+    options: ['Knotweed', 'RedKnotweed', 'Mistyweed', 'Swampweed', 'CherryBlossom', 'DesertWeed', 'Bamboo'],
+    prices: [0.10,/*     */0.35,/*      */1.20,/*    */2.00,/*    */5.00,/*        */2.90,/*     */0.30],
 }
 
 function preGame() {
@@ -29,6 +29,7 @@ function preGame() {
     }
     generateInventory();
     displayInventory();
+    populateShop();
     var intervalID = setInterval(function () {
         update();
     }, 500);
@@ -58,7 +59,37 @@ function displayInventory() {
 // SHOP
 
 function populateShop() {
+    console.log(Date.now());
+    var availableIndexes = [0, 0]
+    // find some options randomly
+    for (let i = Date.now().toLocaleString().length; i > 0; i--) {
+        var value = Date.now().toLocaleString().substr(i, i+1);
+        if (shop.options[value]) {
+            availableIndexes[0] = value;
+            break;
+        }
+    }
+    for (let i = 0; i < Date.now().toLocaleString().length; i++) {
+        var value = Date.now().toLocaleString().substr(i, i+1);
+        if (shop.options[value] && value != availableIndexes[0]) {
+            availableIndexes[1] = value;
+            break;
+        }
+    }
 
+    // show in the html
+    document.getElementById("shop").innerHTML = '';
+    for (let i = 0; i < availableIndexes.length; i++) {
+        var button = document.createElement("button");
+        button.innerHTML = shop.options[availableIndexes[i]] + ' $' + shop.prices[availableIndexes[i]].toFixed(2);
+
+        var inv = document.getElementById("shop");
+        inv.appendChild(button);
+
+        button.addEventListener("click", function () {
+            buy(shop.options[availableIndexes[i]], shop.prices[availableIndexes[i]]);
+        });
+    }
 }
 
 ///// CONTROL
@@ -102,3 +133,15 @@ function sell(index) {
         gameConfig.values[index] = 0;
 }
 
+function buy(seed, cost) {
+
+    if (playerControl.money >= cost) {
+        playerControl.money -= cost;
+        playerControl.seeds.push(seed);
+        displayInventory();
+        populateShop();
+
+    } else {
+        console.warn('Ain\'t got cash)');
+    }
+}
