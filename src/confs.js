@@ -19,7 +19,6 @@ var configurationExamples = {
             downyCoefficient: 3.5,
             treeColor: 'rgba(230, 93, 80, 1)',
             leafColor: 'rgba(0,255,0,1)',
-            fastMode: false,
             fadeOut: false,
             fadeAmount: 0.05,
             autoSpawn: false,
@@ -49,16 +48,8 @@ var configurationExamples = {
         downyCoefficient: 3.5,
         treeColor: 'rgba(230, 200, 200, 1)',
         leafColor: 'rgba(255,25,0,1)',
-        fastMode: false,
-        fadeOut: false,
-        fadeAmount: 0.05,
-        autoSpawn: false,
-        spawnInterval: 250,
-        fadeInterval: 250,
+        worth: 1.2,
         initialWidth: 5,
-        indicateNewBranch: true,
-        fitScreen: false,
-        bgColor: [0, 0, 0]
     },
     Mistyweed:
         {
@@ -80,16 +71,8 @@ var configurationExamples = {
             downyCoefficient: 3.5,
             treeColor: 'rgba(100, 22,20, 1)',
             leafColor: 'rgba(25,255,233,1)',
-            fastMode: false,
-            fadeOut: false,
-            fadeAmount: 0.05,
-            autoSpawn: false,
-            spawnInterval: 250,
-            fadeInterval: 250,
+            worth: 2,
             initialWidth: 5,
-            indicateNewBranch: true,
-            fitScreen: false,
-            bgColor: [0, 0, 0]
         },
     Swampweed:
         {
@@ -98,7 +81,7 @@ var configurationExamples = {
             heightBeforeBranchingBasedOnWidth: 0,
             heightBeforeBranchingBasedOnHeight: 59,
             lifeBeforeLeafing: 45,
-            loss: 0.01,
+            loss: 0.008,
             baseLoss: 0.09,
             minSleep: 10,
             branchLoss: 0.8,
@@ -111,16 +94,8 @@ var configurationExamples = {
             downyCoefficient: 3.5,
             treeColor: 'rgba(230, 10, 10, 1)',
             leafColor: 'rgba(100,100,0,1)',
-            fastMode: false,
-            fadeOut: false,
-            fadeAmount: 0.05,
-            autoSpawn: false,
-            spawnInterval: 250,
-            fadeInterval: 250,
+            worth: 2.5,
             initialWidth: 5,
-            indicateNewBranch: true,
-            fitScreen: false,
-            bgColor: [0, 0, 0]
         },
     CherryBlossom:
         {
@@ -143,6 +118,7 @@ var configurationExamples = {
             maxLife: 90,
             treeColor: 'rgba(80, 30, 8, 1)',
             leafColor: 'rgba(230,100, 190,1)',
+            worth: 3.7,
             initialWidth: 5,
         },
     DesertWeed:
@@ -165,6 +141,7 @@ var configurationExamples = {
             downyCoefficient: 1.5,
             treeColor: 'rgba(200, 93, 80, 1)',
             leafColor: 'rgba(200,255,2,1)',
+            worth: 3.7,
             initialWidth: 7,
         },
     Bamboo:
@@ -179,7 +156,7 @@ var configurationExamples = {
             minSleep: 10,
             branchLoss: 0.2,
             mainLoss: 0.97,
-            speed: 0.25,
+            speed: 0.3,
             newBranch: 0.80,
             leaves: 0.45,
             leafSize: 0.7,
@@ -188,6 +165,7 @@ var configurationExamples = {
             maxLife: 70,
             treeColor: 'rgba(100, 193, 80, 1)',
             leafColor: 'rgba(0,255,0,1)',
+            worth: 1.5,
             initialWidth: 5,
         },
 }

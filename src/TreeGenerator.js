@@ -40,8 +40,12 @@ var TreeGenerator = function (canvas, opts, settings, potIndex) {
             treeColor: 'rgba(230, 93, 80, 1)',
             leafColor: 'rgba(0,255,0,1)',
             maxLife: 200,
+            worth: 1,
             // colorful: true, // Use colors for new trees
-            fastMode: false, // Fast growth mode
+
+            //constants
+            realTimeRate: 1, // the higher the slower. 1 for testing, 5 for game time
+            realTime: true, // Slow growth mode
             fadeOut: false, // Fade slowly to black
             fadeAmount: 0.05, // How much per iteration
             autoSpawn: false, // Automatically create trees
@@ -82,7 +86,9 @@ var TreeGenerator = function (canvas, opts, settings, potIndex) {
         tg.start = function () {
             // Clear intervals
             tg.stop();
-            branch(canvas.WIDTH / 2, canvas.HEIGHT, 0, -3, 10, 100, 0, tg.settings.treeColor, false);
+            var growthRate = 100;
+            if (tg.settings.realTime) growthRate *= tg.settings.realTimeRate;
+            branch(canvas.WIDTH / 2, canvas.HEIGHT, 0, -3, 10, growthRate, 0, tg.settings.treeColor, false);
 
         };
 
@@ -122,10 +128,11 @@ var TreeGenerator = function (canvas, opts, settings, potIndex) {
             } else {
                 trunkWidth = canvas.ctx.lineWidth;
 
-                trunkLifeTime++;
-                gameConfig.values[potIndex] += 0.01;
+                trunkLifeTime += 1;
+                gameConfig.values[potIndex] += 0.01 * tg.settings.worth;
             }
-            if (trunkLifeTime > tg.settings.maxLife) {
+            if (trunkLifeTime > tg.settings.maxLife ) {
+                console.log('done', trunkLifeTime, tg.settings.maxLife);
                 done();
                 return;
             }
@@ -135,7 +142,7 @@ var TreeGenerator = function (canvas, opts, settings, potIndex) {
             // if (!notFirst) circle(x, y, w, 'rgba(255,0,0,0.4)');
 
 
-            if (tg.settings.fastMode) growthRate *= 0.5;
+
             // Calculate new coords
             x = x + dx;
             y = y + dy;
@@ -233,7 +240,7 @@ var TreeGenerator = function (canvas, opts, settings, potIndex) {
         }
 
         function foliage(x, y, rad, color, dir) {
-            gameConfig.values[potIndex] += 0.001;
+            gameConfig.values[potIndex] += 0.001 * tg.settings.worth;
 
             canvas.ctx.save(); // save state
             canvas.ctx.beginPath();

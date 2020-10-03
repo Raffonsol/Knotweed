@@ -1,24 +1,27 @@
 var startValues = {
-    seeds: ['Knotweed', 'Knotweed', 'RedKnotweed']
-}
+    seeds: ['Knotweed', 'Swampweed', 'RedKnotweed']
+};
+var shop = {
+    options: ['Knotweed', 'RedKnotweed', 'Mistyweed', 'Swampweed', 'CherryBlossom', 'DesertWeed', 'Bamboo'],
+    prices: [0.10,/*     */0.35,/*      */1.20,/*    */2.00,/*    */5.00,/*        */2.90,/*     */0.30],
+    potInitialPrice: 10,
+    potIncrementPrice: 13,
+};
 
 var playerControl = {
     seeds: [],
     customSeeds: [],
     money: 0,
-}
+    potsPurchased: 0,
+};
 
-// 0 = now owned, 1 = owned but not planted, 2 = growing plant
 var gameConfig = {
+    // 0 = now owned, 1 = owned but not planted, 2 = growing plant
     availablePots: [1, 1, 0, 0, 0, 0, 0, 0,],
     values: [0, 0, 0, 0, 0, 0, 0, 0,],
     trees: [null, null, null, null, null, null, null, null],
-}
+};
 
-var shop = {
-    options: ['Knotweed', 'RedKnotweed', 'Mistyweed', 'Swampweed', 'CherryBlossom', 'DesertWeed', 'Bamboo'],
-    prices: [0.10,/*     */0.35,/*      */1.20,/*    */2.00,/*    */5.00,/*        */2.90,/*     */0.30],
-}
 
 function preGame() {
 
@@ -57,10 +60,14 @@ function displayInventory() {
 }
 
 // SHOP
+function populateShop(){
+    populateSeedShop();
+    populatePotShop();
+}
 
-function populateShop() {
+function populateSeedShop() {
     console.log(Date.now());
-    var availableIndexes = [0, 0]
+    var availableIndexes = [0, 0];
     // find some options randomly
     for (let i = Date.now().toLocaleString().length; i > 0; i--) {
         var value = Date.now().toLocaleString().substr(i, i+1);
@@ -78,18 +85,37 @@ function populateShop() {
     }
 
     // show in the html
-    document.getElementById("shop").innerHTML = '';
+    document.getElementById("seedShop").innerHTML = '';
     for (let i = 0; i < availableIndexes.length; i++) {
         var button = document.createElement("button");
         button.innerHTML = shop.options[availableIndexes[i]] + ' $' + shop.prices[availableIndexes[i]].toFixed(2);
 
-        var inv = document.getElementById("shop");
+        var inv = document.getElementById("seedShop");
         inv.appendChild(button);
 
         button.addEventListener("click", function () {
             buy(shop.options[availableIndexes[i]], shop.prices[availableIndexes[i]]);
         });
     }
+}
+
+function populatePotShop() {
+
+    // calculate next pot price
+    var price = shop.potInitialPrice + shop.potIncrementPrice*playerControl.potsPurchased;
+
+    // reset and show html
+    document.getElementById("potShop").innerHTML = '';
+
+    var button = document.createElement("button");
+    button.innerHTML = 'New Pot: $' + price;
+
+    var inv = document.getElementById("potShop");
+    inv.appendChild(button);
+
+    button.addEventListener("click", function () {
+        buyPot();
+    });
 }
 
 ///// CONTROL
@@ -129,7 +155,7 @@ function clickSeed(seed) {
 function sell(index) {
         playerControl.money += gameConfig.values[index];
         gameConfig.availablePots[index] = 1;
-        gameConfig.trees[index].clear();
+        gameConfig.trees[index].clear(); // TODO: catch error
         gameConfig.values[index] = 0;
 }
 
@@ -139,7 +165,23 @@ function buy(seed, cost) {
         playerControl.money -= cost;
         playerControl.seeds.push(seed);
         displayInventory();
-        populateShop();
+        populateSeedShop();
+
+    } else {
+        console.warn('Ain\'t got cash)');
+    }
+}
+
+function buyPot() {
+    var price = shop.potInitialPrice + shop.potIncrementPrice*playerControl.potsPurchased;
+    if (playerControl.money >= price) {
+        playerControl.money -= price;
+
+        var nextPot = gameConfig.availablePots.indexOf(0);
+        gameConfig.availablePots[nextPot] = 1;
+        playerControl.potsPurchased++;
+        document.getElementById('cube'+nextPot).style.visibility = 'visible';
+        populatePotShop();
 
     } else {
         console.warn('Ain\'t got cash)');
