@@ -17,7 +17,7 @@ var playerControl = {
 
 var gameConfig = {
     // 0 = now owned, 1 = owned but not planted, 2 = growing plant
-    availablePots: [1, 1, 0, 0, 0, 0, 0, 0,],
+    availablePots: [1, 1, 1, 1, 1, 1, 1, 1,],
     values: [0, 0, 0, 0, 0, 0, 0, 0,],
     trees: [null, null, null, null, null, null, null, null],
 };
