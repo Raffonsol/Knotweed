@@ -34,27 +34,22 @@ var TreeGenerator = function (canvas, opts, settings, potIndex) {
             speed: 0.25, // Movement speed
             newBranch: 0.55, // Chance of not starting a new branch
             leaves: 0.85, // Chance of not starting a new leaf
-            leafSize: 0.7, // multiplier so go easy
             downyLeaves: true,
             downyCoefficient: 3.5,
             treeColor: 'rgba(230, 93, 80, 1)',
             leafColor: 'rgba(0,255,0,1)',
             maxLife: 200,
             worth: 1,
+            leafSize: 0.7, // multiplier so go easy
+            leafSharpness: 5, // how pointy the edge is
+            leafThickness: 0,
+            // leafType: null,
             // colorful: true, // Use colors for new trees
 
             //constants
             realTimeRate: 1, // the higher the slower. 1 for testing, 5 for game time
             realTime: true, // Slow growth mode
-            fadeOut: false, // Fade slowly to black
-            fadeAmount: 0.05, // How much per iteration
-            autoSpawn: false, // Automatically create trees
-            spawnInterval: 250, // Spawn interval in ms
-            fadeInterval: 250, // Fade interval in ms
             initialWidth: 5, // Initial branch width
-            indicateNewBranch: true, // Display a visual indicator when a new branch is born
-            fitScreen: false, // Resize canvas to fit screen,
-            bgColor: [0, 0, 0]
         };
         tg.done = false;
 
@@ -242,6 +237,9 @@ var TreeGenerator = function (canvas, opts, settings, potIndex) {
         function foliage(x, y, rad, color, dir) {
             gameConfig.values[potIndex] += 0.001 * tg.settings.worth;
 
+            var saveLineWidth = canvas.ctx.lineWidth; // save line width
+            canvas.ctx.lineWidth = tg.settings.leafThickness === 0 ? canvas.ctx.lineWidth : tg.settings.leafThickness;
+
             canvas.ctx.save(); // save state
             canvas.ctx.beginPath();
 
@@ -250,23 +248,24 @@ var TreeGenerator = function (canvas, opts, settings, potIndex) {
             if (tg.settings.downyLeaves) {
                 rotation = Math.random() * tg.settings.downyCoefficient - tg.settings.downyCoefficient / 2;
             }
-
             canvas.ctx.translate(1, 0);
             canvas.ctx.scale(1, 1);
+
             switch (tg.settings.leafType) {
                 case 'mushroom':
-                    canvas.ctx.ellipse(x, y, tg.settings.leafSize, tg.settings.leafSize, Math.PI, 0, Math.PI, false);
+                    canvas.ctx.ellipse(x, y, tg.settings.leafSize, tg.settings.leafSize, Math.PI+rotation, 0, Math.PI, false);
                     break;
                 case 'thin':
-                    canvas.ctx.ellipse(x, y, rad * tg.settings.leafSize, rad * tg.settings.leafSize, rotation + 3, 1, 2, false);
+                    // canvas.ctx.ellipse(x, y, rad * tg.settings.leafSize, rad * tg.settings.leafSize, rotation + 3, 1, 2, false);
+                    canvas.ctx.ellipse(x, y, Math.sqrt(rad) * tg.settings.leafSize / 5, Math.sqrt(rad) * tg.settings.leafSharpness * tg.settings.leafSize, rotation, 0, Math.PI, false);
                     break;
                 default:
                     // canvas.ctx.ellipse(x, y, Math.sqrt(rad) * tg.settings.leafSize, Math.sqrt(rad) * 5 * tg.settings.leafSize, rotation, 0, Math.PI, false);
-                    canvas.ctx.ellipse(x, y, Math.sqrt(rad) * tg.settings.leafSize, Math.sqrt(rad) * 5 * tg.settings.leafSize, rotation, 0, Math.PI, false);
+                    canvas.ctx.ellipse(x, y, Math.sqrt(rad) * tg.settings.leafSize, Math.sqrt(rad) * tg.settings.leafSharpness * tg.settings.leafSize, rotation, 0, Math.PI, false);
                     break;
             }
 
-
+            canvas.ctx.lineWidth = saveLineWidth;
             canvas.ctx.restore(); // restore to original state
             canvas.ctx.strokeStyle = color;
             canvas.ctx.stroke();
