@@ -1,9 +1,9 @@
 var startValues = {
-    seeds: ['Knotweed', 'Swampweed', 'RedKnotweed']
+    seeds: ['Knotweed', 'RedKnotweed', 'Mistyweed', 'Swampweed', 'CherryBlossom', 'DesertWeed', 'Bamboo', 'Crabgrass', 'Crabgrass', 'Yucca', 'Yucca', "Yucca", "Yucca", "Yucca",],
 };
 var shop = {
     options: ['Knotweed', 'RedKnotweed', 'Mistyweed', 'Swampweed', 'CherryBlossom', 'DesertWeed', 'Bamboo'],
-    prices: [0.10,/*     */0.35,/*      */1.20,/*    */2.00,/*    */5.00,/*        */2.90,/*     */0.30],
+    prices: [0.10,/*     */0.10,/*      */0.10,/*    */0.10,/*    */0.10,/*        */0.10,/*     */0.10],
     potInitialPrice: 10,
     potIncrementPrice: 13,
 };
