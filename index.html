@@ -28,23 +28,24 @@
     }
 
     .rectangle {
-        height: 20px;
+        height: 7px;
         width: 80px;
-        background-color: #555;
-        border-bottom: 2px solid black;
+        color: #555;
+        border-top: 15px solid #555;
     }
 
     .trapezoid {
         border-top: 50px solid #555;
         border-left: 15px solid transparent;
         border-right: 15px solid transparent;
+        color: #555;
         height: 0;
         width: 35px;
     }
 
     .pot {
         margin: auto;
-        margin-top: -10px;
+        margin-top: -5px;
         display: block;
     }
 
@@ -88,6 +89,7 @@
     <div> SHOP
         <div id="seedShop"></div>
         <div id="potShop"></div>
+        <div id="upgradeShop"></div>
     </div>
 </div>
 
@@ -98,6 +100,7 @@
         <div class="trapezoid pot"></div>
         Value: <span id="value0">0</span>
         <button onclick="sell(0)">Sell</button>
+        <span id="plantName0"></span>
     </div>
     <div class="cube" id="cube1">
         <canvas width="250%" height="300%" id="bg1" style="color:#09F"></canvas>
@@ -105,6 +108,7 @@
         <div class="trapezoid pot"></div>
         Value: <span id="value1">0</span>
         <button onclick="sell(1)">Sell</button>
+        <span id="plantName1"></span>
     </div>
     <div class="cube" id="cube2">
         <canvas width="250%" height="300%" id="bg2" style="color:#09F"></canvas>
@@ -112,6 +116,7 @@
         <div class="trapezoid pot"></div>
         Value: <span id="value2">0</span>
         <button onclick="sell(2)">Sell</button>
+        <span id="plantName2"></span>
     </div>
     <div class="cube" id="cube3">
         <canvas width="250%" height="300%" id="bg3" style="color:#09F"></canvas>
@@ -119,6 +124,7 @@
         <div class="trapezoid pot"></div>
         Value: <span id="value3">0</span>
         <button onclick="sell(3)">Sell</button>
+        <span id="plantName3"></span>
     </div>
     <br>
     <div class="cube" id="cube4">
@@ -127,6 +133,7 @@
         <div class="trapezoid pot"></div>
         Value: <span id="value4">0</span>
         <button onclick="sell(4)">Sell</button>
+        <span id="plantName4"></span>
     </div>
     <div class="cube" id="cube5">
         <canvas width="250%" height="300%" id="bg5" style="color:#09F"></canvas>
@@ -134,6 +141,7 @@
         <div class="trapezoid pot"></div>
         Value: <span id="value5">0</span>
         <button onclick="sell(5)">Sell</button>
+        <span id="plantName5"></span>
     </div>
     <div class="cube" id="cube6">
         <canvas width="250%" height="300%" id="bg6" style="color:#09F"></canvas>
@@ -141,6 +149,7 @@
         <div class="trapezoid pot"></div>
         Value: <span id="value6">0</span>
         <button onclick="sell(6)">Sell</button>
+        <span id="plantName6"></span>
     </div>
     <div class="cube" id="cube7">
         <canvas width="250%" height="300%" id="bg7" style="color:#09F"></canvas>
@@ -148,6 +157,7 @@
         <div class="trapezoid pot"></div>
         Value: <span id="value7">0</span>
         <button onclick="sell(7)">Sell</button>
+        <span id="plantName7"></span>
     </div>
 </div>
 <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.2.1/jquery.min.js"></script>

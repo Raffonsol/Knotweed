@@ -22,6 +22,7 @@ var TreeGenerator = function (canvas, opts, settings, potIndex) {
         // Default settings
         tg.settings = settings ? settings : {
             upwardTendency: 0.12,  // how abruptly the branches will tend upward but it kinda affects the speed the branch grows too so its jenk
+            tendencyAffectsMainBranch: false,
             branchStrengthAfterTrunkDeath: 0.2, // between 0.1 and 0.3 I would recommend
             heightBeforeBranchingBasedOnWidth: 0,
             heightBeforeBranchingBasedOnHeight: 59,
@@ -40,10 +41,17 @@ var TreeGenerator = function (canvas, opts, settings, potIndex) {
             leafColor: 'rgba(0,255,0,1)',
             maxLife: 200,
             worth: 1,
+            maxValue: 99999,
+            sources: 1,
             leafSize: 0.7, // multiplier so go easy
             leafSharpness: 5, // how pointy the edge is
             leafThickness: 0,
-            // leafType: null,
+            mainBranches: 1,
+            extraBranches: 0,
+            leafType: null,
+
+            openStrength: 0.1,
+            openTillLife: 0,
             // colorful: true, // Use colors for new trees
 
             //constants
@@ -83,7 +91,15 @@ var TreeGenerator = function (canvas, opts, settings, potIndex) {
             tg.stop();
             var growthRate = 100;
             if (tg.settings.realTime) growthRate *= tg.settings.realTimeRate;
-            branch(canvas.WIDTH / 2, canvas.HEIGHT, 0, -3, 10, growthRate, 0, tg.settings.treeColor, false);
+            branch(canvas.WIDTH / 2, canvas.HEIGHT, 0, -3, tg.settings.initialWidth, growthRate, 0, tg.settings.treeColor, false);
+            // for when there are multiple main branches
+            for (let i = 1; i < tg.settings.mainBranches; i++) {
+                branch((canvas.WIDTH / 2) + Math.floor(Math.random() * 60) - 30, canvas.HEIGHT, 0, -3, tg.settings.initialWidth, growthRate, 0, tg.settings.treeColor, false);
+            }
+            // for when there cna be extra main branches randomly
+            for (let i = 0; i < Math.floor(Math.random()*tg.settings.extraBranches); i++) {
+                branch((canvas.WIDTH / 2) + Math.floor(Math.random() * 60) - 30, canvas.HEIGHT, 0, -3, tg.settings.initialWidth, growthRate, 0, tg.settings.treeColor, false);
+            }
 
         };
 
@@ -122,28 +138,30 @@ var TreeGenerator = function (canvas, opts, settings, potIndex) {
                 // while (canvas.ctx.lineWidth > mainWidth) canvas.ctx.lineWidth-=0.01;
             } else {
                 trunkWidth = canvas.ctx.lineWidth;
-
                 trunkLifeTime += 1;
-                gameConfig.values[potIndex] += 0.01 * tg.settings.worth;
+
+                // add money
+                if (gameConfig.values[potIndex] <= tg.settings.maxValue)
+                    gameConfig.values[potIndex] += 0.01 * tg.settings.worth;
             }
             if (trunkLifeTime > tg.settings.maxLife ) {
-                console.log('done', trunkLifeTime, tg.settings.maxLife);
                 done();
                 return;
             }
             canvas.ctx.beginPath();
             canvas.ctx.moveTo(x, y);
-            // console.log(lifetime, trunkLifeTime, trunkDead);
             // if (!notFirst) circle(x, y, w, 'rgba(255,0,0,0.4)');
-
-
 
             // Calculate new coords
             x = x + dx;
             y = y + dy;
             // Change dir
             dx = dx + Math.sin(Math.random() + lifetime) * tg.settings.speed;
-            dy = dy + Math.cos(Math.random() + lifetime) * (tg.settings.speed) - (notFirst && lifetime * Math.random() < 15 ? tg.settings.upwardTendency : 0);
+            dy = dy + Math.cos(Math.random() + lifetime) * (tg.settings.speed) -
+                ((notFirst || tg.settings.tendencyAffectsMainBranch) && lifetime * Math.random() < 15 ? tg.settings.upwardTendency : 0);
+
+            // controlling openess
+            if (lifetime<tg.settings.openTillLife)dx+= (x > canvas.WIDTH/2) ? tg.settings.openStrength : -1*tg.settings.openStrength;
 
             // Check if branches are getting too low
             if (w < 6 && y > canvas.HEIGHT - Math.random() * (0.3 * canvas.HEIGHT)) w = w * 0.8;
@@ -235,7 +253,9 @@ var TreeGenerator = function (canvas, opts, settings, potIndex) {
         }
 
         function foliage(x, y, rad, color, dir) {
-            gameConfig.values[potIndex] += 0.001 * tg.settings.worth;
+            // add money
+            if (gameConfig.values[potIndex] <= tg.settings.maxValue)
+                gameConfig.values[potIndex] += 0.001 * tg.settings.worth;
 
             var saveLineWidth = canvas.ctx.lineWidth; // save line width
             canvas.ctx.lineWidth = tg.settings.leafThickness === 0 ? canvas.ctx.lineWidth : tg.settings.leafThickness;
