@@ -188,6 +188,7 @@ function startPot(potInd, seed) {
     var canvas = $('#bg'+potInd);
     gameConfig.trees[potInd] = new TreeGenerator(canvas, configurationExamples[seed], null, potInd, idleCreds);
     gameConfig.trees[potInd].start();
+    document.getElementById('plantName' + potInd).innerText = seed;
     if (gameConfig.trees[potInd].settings.alsoGrow){
         gameConfig.trees[potInd] = new TreeGenerator(canvas, configurationExamples[seed].alsoGrow, null, potInd, idleCreds);
         gameConfig.trees[potInd].start();
@@ -198,7 +199,6 @@ function clickSeed(seed) {
     var firstAvailable = gameConfig.availablePots.indexOf(1);
     if (firstAvailable >= 0) {
         gameConfig.availablePots[firstAvailable] = 2;
-        document.getElementById('plantName' + firstAvailable).innerText = seed;
     } else {
         console.warn('no available pots');
         return;
