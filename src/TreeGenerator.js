@@ -14,11 +14,23 @@
  * @param {Object} canvas jQuery DOM object for the canvas element
  * @param {Object} opts   Settings array, see default values and explanation below
  */
-var TreeGenerator = function (canvas, opts, settings, potIndex) {
+var TreeGenerator = function (canvas, opts, settings, potIndex, creds) {
         var trunkWidth = 0;
         var trunkLifeTime = 0;
+        var branchLifeTime = 0;
         var trunkDead = false;
         var tg = {};
+
+
+        var goingValue = 0;
+        var loadingSpeed = true;
+
+        var increasedSpeed = 5;
+        var normalSpeed = 0;
+
+        var growthCreds = creds || 0;
+        
+
         // Default settings
         tg.settings = settings ? settings : {
             upwardTendency: 0.12,  // how abruptly the branches will tend upward but it kinda affects the speed the branch grows too so its jenk
@@ -46,18 +58,20 @@ var TreeGenerator = function (canvas, opts, settings, potIndex) {
             leafSize: 0.7, // multiplier so go easy
             leafSharpness: 5, // how pointy the edge is
             leafThickness: 0,
+            leafOnTip: false,
             mainBranches: 1,
             extraBranches: 0,
             leafType: null,
 
             openStrength: 0.1,
             openTillLife: 0,
-            // colorful: true, // Use colors for new trees
 
             //constants
-            realTimeRate: 1, // the higher the slower. 1 for testing, 5 for game time
+            realTimeRate: 15, // the higher the slower. 1 for testing, 5 for game time
             realTime: true, // Slow growth mode
             initialWidth: 5, // Initial branch width
+
+            alsoGrow: null, // can be set to another plant config / array not supported yet
         };
         tg.done = false;
 
@@ -90,16 +104,30 @@ var TreeGenerator = function (canvas, opts, settings, potIndex) {
             // Clear intervals
             tg.stop();
             var growthRate = 100;
+            
             if (tg.settings.realTime) growthRate *= tg.settings.realTimeRate;
+            normalSpeed = growthRate;
+            // grow fast while loading
+            if (progressRecording[potIndex][randomIndex]) {
+                loadingSpeed = true;
+                growthRate/=500;
+                increasedSpeed = growthRate;
+            } else {
+                loadingSpeed = false;
+            }
+
             branch(canvas.WIDTH / 2, canvas.HEIGHT, 0, -3, tg.settings.initialWidth, growthRate, 0, tg.settings.treeColor, false);
+            var initialLocRange = tg.settings.initialLocRange?tg.settings.initialLocRange:60;
+
             // for when there are multiple main branches
             for (let i = 1; i < tg.settings.mainBranches; i++) {
-                branch((canvas.WIDTH / 2) + Math.floor(Math.random() * 60) - 30, canvas.HEIGHT, 0, -3, tg.settings.initialWidth, growthRate, 0, tg.settings.treeColor, false);
+                branch((canvas.WIDTH / 2) + Math.floor(getRandom() * initialLocRange) - initialLocRange/2, canvas.HEIGHT, 0, -3, tg.settings.initialWidth, growthRate, 0, tg.settings.treeColor, false);
             }
             // for when there cna be extra main branches randomly
-            for (let i = 0; i < Math.floor(Math.random()*tg.settings.extraBranches); i++) {
-                branch((canvas.WIDTH / 2) + Math.floor(Math.random() * 60) - 30, canvas.HEIGHT, 0, -3, tg.settings.initialWidth, growthRate, 0, tg.settings.treeColor, false);
+            for (let i = 0; i < Math.floor(getRandom()*tg.settings.extraBranches); i++) {
+                branch((canvas.WIDTH / 2) + Math.floor(getRandom() * initialLocRange) - initialLocRange/2, canvas.HEIGHT, 0, -3, tg.settings.initialWidth, growthRate, 0, tg.settings.treeColor, false);
             }
+            
 
         };
 
@@ -128,7 +156,10 @@ var TreeGenerator = function (canvas, opts, settings, potIndex) {
          * @return {void}
          */
         function branch(x, y, dx, dy, w, growthRate, lifetime, branchColor, notFirst) {
-            if (!canvas.ctx || tg.done) return;
+            if (!canvas.ctx || tg.done){
+                if (tg.settings.leafOnTip)foliage(x, y, (w - lifetime * tg.settings.loss)*tg.settings.mainLoss, tg.settings.leafColor, x * getRandom());
+                 return;
+                }
             // console.log(notFirst);
             canvas.ctx.lineWidth = w - lifetime * (notFirst ? tg.settings.loss : tg.settings.baseLoss);
             canvas.ctx.lineWidth = notFirst ? canvas.ctx.lineWidth * 0.90 : canvas.ctx.lineWidth;
@@ -136,35 +167,49 @@ var TreeGenerator = function (canvas, opts, settings, potIndex) {
 
             if (notFirst) {
                 // while (canvas.ctx.lineWidth > mainWidth) canvas.ctx.lineWidth-=0.01;
+                branchLifeTime +=1;
             } else {
                 trunkWidth = canvas.ctx.lineWidth;
                 trunkLifeTime += 1;
 
                 // add money
-                if (gameConfig.values[potIndex] <= tg.settings.maxValue)
-                    gameConfig.values[potIndex] += 0.01 * tg.settings.worth;
+                addValue( 0.01 * tg.settings.worth);
             }
-            if (trunkLifeTime > tg.settings.maxLife ) {
+            if (trunkLifeTime > tg.settings.maxLife ||branchLifeTime >tg.settings.maxBranchLife) {
+                if (tg.settings.leafOnTip)foliage(x, y, (w - lifetime * tg.settings.loss)*tg.settings.mainLoss, tg.settings.leafColor, x * getRandom());
                 done();
                 return;
             }
             canvas.ctx.beginPath();
             canvas.ctx.moveTo(x, y);
-            // if (!notFirst) circle(x, y, w, 'rgba(255,0,0,0.4)');
 
             // Calculate new coords
             x = x + dx;
             y = y + dy;
-            // Change dir
-            dx = dx + Math.sin(Math.random() + lifetime) * tg.settings.speed;
-            dy = dy + Math.cos(Math.random() + lifetime) * (tg.settings.speed) -
-                ((notFirst || tg.settings.tendencyAffectsMainBranch) && lifetime * Math.random() < 15 ? tg.settings.upwardTendency : 0);
 
+            // branch movement changes
+            switch (tg.settings.pattern) {
+                case '1':
+                default:
+                    // Change dir
+                    dx = dx + Math.sin(getRandom() + lifetime) * tg.settings.speed;
+                    dy = dy + Math.cos(getRandom() + lifetime) * (tg.settings.speed) -
+                        ((notFirst || tg.settings.tendencyAffectsMainBranch) && lifetime * getRandom() < 15 ? tg.settings.upwardTendency : 0);
+   
+                    // Check if branches are getting too low
+                    if (w < 6 && y > canvas.HEIGHT - getRandom() * (0.3 * canvas.HEIGHT)) w = w * 0.8;
+                    break;
+                case '2':
+                    // Change dir
+                    dx = dx + Math.cos(getRandom() + lifetime) * tg.settings.speed + (getRandom()- 0.45)*tg.settings.upwardTendency;
+                    dy = dy + Math.sin(getRandom() + lifetime) * (tg.settings.speed);
+                    // Check if branches are getting too low
+                    if (w < 6 && y > canvas.HEIGHT - getRandom() * (0.3 * canvas.HEIGHT)) dy = dy * 1.09;
+                    break;
+            }
             // controlling openess
             if (lifetime<tg.settings.openTillLife)dx+= (x > canvas.WIDTH/2) ? tg.settings.openStrength : -1*tg.settings.openStrength;
 
-            // Check if branches are getting too low
-            if (w < 6 && y > canvas.HEIGHT - Math.random() * (0.3 * canvas.HEIGHT)) w = w * 0.8;
 
             // Draw the next segment of the branch
             canvas.ctx.strokeStyle = branchColor || tg.settings.treeColor;
@@ -172,50 +217,65 @@ var TreeGenerator = function (canvas, opts, settings, potIndex) {
             canvas.ctx.stroke();
 
             // adding leaves
-            if (tg.settings.lifeBeforeLeafing < trunkLifeTime && Math.random() > tg.settings.leaves && notFirst) {
-                // createFoliage(x, y, w, tg.settings.leafColor, x * Math.random(), './assets/leaf/generic.png');
-                foliage(x, y, w, tg.settings.leafColor, x * Math.random());
+            if (tg.settings.lifeBeforeLeafing < trunkLifeTime && getRandom() > tg.settings.leaves && notFirst) {
+                // createFoliage(x, y, w, tg.settings.leafColor, x * getRandom(), './assets/leaf/generic.png');
+                foliage(x, y, w, tg.settings.leafColor, x * getRandom());
+            }
+
+            // check growth rate
+            if ((loadingSpeed && !progressRecording[potIndex][randomIndex])) {
+                if (growthCreds > 0) {
+                    growthCreds -=1;
+                } else {
+                    loadingSpeed = false;
+                    growthRate*=500;
+                    save();
+                }   
+            } else if ((!loadingSpeed && growthRate < (normalSpeed - 1))) {
+                growthRate*=500;
             }
 
             // Generate new branches
             // they should spawn after a certain lifetime has been met, although depending on the width
             if (lifetime >
-                tg.settings.heightBeforeBranchingBasedOnWidth * w + Math.random() * tg.settings.heightBeforeBranchingBasedOnHeight
-                && Math.random() > tg.settings.newBranch) {
+                tg.settings.heightBeforeBranchingBasedOnWidth * w + getRandom() * tg.settings.heightBeforeBranchingBasedOnHeight
+                && getRandom() > tg.settings.newBranch) {
                 setTimeout(function () {
                     // Indicate the birth of a new branch
                     if (tg.settings.indicateNewBranch) {
                         // circle(x, y, w, 'rgba(255,0,0,0.4)');
                     }
-                    branch(x, y, 2 * Math.sin(Math.random() + lifetime), 2 * Math.cos(Math.random() + lifetime), (w - lifetime * tg.settings.loss) * tg.settings.branchLoss, growthRate + Math.random() * 100, 0, branchColor, true);
+                    branch(x, y, 2 * Math.sin(getRandom() + lifetime), 2 * Math.cos(getRandom() + lifetime), (w - lifetime * tg.settings.loss) * tg.settings.branchLoss, growthRate + getRandom() * 100, 0, branchColor, true);
                     // When it branches, it looses a bit of width
                     w *= tg.settings.mainLoss;
-                }, 2 * growthRate * Math.random() + tg.settings.minSleep);
+                }, 2 * growthRate * getRandom() + tg.settings.minSleep);
             }
             // Continue the branch
             if (w - lifetime * tg.settings.loss >= 1
                 && (!notFirst || (notFirst && lifetime <= trunkLifeTime))
-                && (!trunkDead || (trunkDead && Math.random() * lifetime <= trunkLifeTime * tg.settings.branchStrengthAfterTrunkDeath))
+                && (!trunkDead || (trunkDead && getRandom() * lifetime <= trunkLifeTime * tg.settings.branchStrengthAfterTrunkDeath))
             // || (!notFirst && canvas.ctx.width !== mainWidth)
             ) {
                 setTimeout(function () {
                     branch(x, y, dx, dy, w, growthRate, ++lifetime, branchColor, notFirst);
                 }, growthRate);
-            } else if (!notFirst) {
-                trunkDead = true;
+            } else  {
+                if (tg.settings.leafOnTip)foliage(x, y, (w - lifetime * tg.settings.loss), tg.settings.leafColor, x * getRandom());
+                if (!notFirst) trunkDead = true;
             }
         }
 
         function done() {
+            save();
             tg.done = true;
         }
 
         function createFoliage(x, y, rad, color, dir, src) {
-            var img = new Image(tg.settings.leafSize * Math.random());
+            var img = new Image(tg.settings.leafSize * getRandom());
             img.src = src;
             img.style.transform = 'rotate(90deg)';
             img.color = color;
-            img.width = (tg.settings.leafSize) * 40 * Math.random();
+            img.width = (tg.settings.leafSize) * 40 * getRandom();
             // canvas.ctx.save();
             // canvas.ctx.rotate(1.2);
             canvas.ctx.style = color;
@@ -254,8 +314,7 @@ var TreeGenerator = function (canvas, opts, settings, potIndex) {
 
         function foliage(x, y, rad, color, dir) {
             // add money
-            if (gameConfig.values[potIndex] <= tg.settings.maxValue)
-                gameConfig.values[potIndex] += 0.001 * tg.settings.worth;
+            addValue( 0.001 * (tg.settings.leafWorth ? tg.settings.leafWorth : tg.settings.worth));
 
             var saveLineWidth = canvas.ctx.lineWidth; // save line width
             canvas.ctx.lineWidth = tg.settings.leafThickness === 0 ? canvas.ctx.lineWidth : tg.settings.leafThickness;
@@ -266,7 +325,7 @@ var TreeGenerator = function (canvas, opts, settings, potIndex) {
             var rotation = dir;
 
             if (tg.settings.downyLeaves) {
-                rotation = Math.random() * tg.settings.downyCoefficient - tg.settings.downyCoefficient / 2;
+                rotation = getRandom() * tg.settings.downyCoefficient - tg.settings.downyCoefficient / 2;
             }
             canvas.ctx.translate(1, 0);
             canvas.ctx.scale(1, 1);
@@ -289,10 +348,6 @@ var TreeGenerator = function (canvas, opts, settings, potIndex) {
             canvas.ctx.restore(); // restore to original state
             canvas.ctx.strokeStyle = color;
             canvas.ctx.stroke();
-        }
-
-        function createPath(parent) {
-            return $(document.createElementNS(ns, "path")).appendTo(parent);
         }
 
         function createLeaf(x, y, rad, color, dir) {
@@ -323,41 +378,32 @@ var TreeGenerator = function (canvas, opts, settings, potIndex) {
             // canvas.ctx.rotate(dir * Math.PI);
         }
 
-
-        /**
-         * Resize the canvas to the window size
-         * @param  {Object} e Event object
-         * @return {void}
-         */
-        function resizeCanvas(e) {
-            canvas.WIDTH = window.innerWidth;
-            canvas.HEIGHT = window.innerHeight;
-
-            canvas.$el.attr('width', canvas.WIDTH);
-            canvas.$el.attr('height', canvas.HEIGHT);
+        var randomIndex = 0;
+        // gets a random number or loads a previously generated one
+        function getRandom() {
+            var res;
+            if (progressRecording[potIndex][randomIndex]) {
+                res = progressRecording[potIndex][randomIndex];
+            } else {
+                res = Math.random( );
+                progressRecording[potIndex][randomIndex] = res;
+            }
+            randomIndex++;
+            return res;
         }
 
-        /**
-         * Return a new color, depending on the colorful setting
-         * @return {String} HTML color
-         */
-        function newColor() {
-            return '#' + Math.round(0xffffff * Math.random()).toString(16);
+        // update value of pot
+        function addValue(value) {
+            // dont add if max already reached
+            if (!(gameConfig.values[potIndex] <= tg.settings.maxValue)) {
+                return;
+            }
+                // increase local saved value
+                goingValue += value;
+                // update gameConfig value only if local saved is greater, so that it can support loading
+                if (gameConfig.values[potIndex] < goingValue)
+                    gameConfig.values[potIndex] = goingValue;
         }
-
-        /**
-         * Resize the canvas to fit the screen
-         * @return {void}
-         */
-        tg.resizeCanvas = function () {
-            canvas.WIDTH = window.innerWidth;
-            canvas.HEIGHT = window.innerHeight;
-
-            canvas.$el.attr('width', canvas.WIDTH);
-            canvas.$el.attr('height', canvas.HEIGHT);
-        };
-
-        if (tg.settings.fitScreen) tg.resizeCanvas();
 
         return tg;
 

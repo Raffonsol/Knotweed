@@ -1,14 +1,16 @@
 var startValues = {
-    seeds: ['Knotweed', 'Blackthorn', 'RedKnotweed', "Porcini", "Porcini", "Porcini", "Porcini"]
+    seeds: ['Knotweed', 'Blackthorn', ],
 };
 var shop = {
     options0: ['Knotweed', 'RedKnotweed', 'Mistyweed', 'Swampweed', 'CherryBlossom', 'DesertWeed', 'Bamboo'],
     prices0: [0.10,/*     */0.35,/*      */1.20,/*    */2.00,/*    */5.00,/*        */2.90,/*     */0.30],
     options1: ['Crabgrass', 'Yucca', 'NorfolkPine', 'Porcini', 'CherryBlossom', 'Blackthorn', 'AloeVera'],
     prices1: [0.15,/*     */0.50,/*      */2.50,/*    */7.20,/*    */5.00,/*        */1.20,/*     */4.30],
+    options2: ['PeaceLily', 'CottonPlant', 'Cypress', 'Pachira', 'Bonsai'],
+    prices2: [10.25,/*    */4,/*         */39.65,/*     */9,/*    */18.5],
     potInitialPrice: 10,
     potIncrementPrice: 13,
-    upgradePrices: [15, 50, 210, 900],
+    upgradePrices: [15, 50, 410, 1900],
 };
 
 var playerControl = {
@@ -21,20 +23,41 @@ var playerControl = {
 
 var gameConfig = {
     // 0 = now owned, 1 = owned but not planted, 2 = growing plant
-    availablePots: [1, 1, 0, 0, 0, 0, 0, 0,],
-    values: [0, 0, 0, 0, 0, 0, 0, 0,],
-    trees: [null, null, null, null, null, null, null, null],
+    availablePots: [1, 1, 0, 0, 0, 0, 0, 0,0],
+    values: [0, 0, 0, 0, 0, 0, 0, 0,0],
+    seeds: ['','','','','','','','',''],
+    trees: [null, null, null, null, null, null, null, null, null],
 };
+// array of arrays, each is the list of random numbers so far in a pot
+var progressRecording = [
+    [], [], [], [], [] ,[], [], [], []
+];
 
+var idleCreds = 0;
+var resetting = false;
 
 function preGame() {
+    var saveData = JSON.parse(localStorage.saveData || null) || {};
 
+    if (saveData.gameConfig) {
+        gameConfig = saveData.gameConfig;
+        playerControl = saveData.playerControl;
+        progressRecording = saveData.progressRecording;
+
+        idleCreds = Math.floor((new Date().getTime() - saveData.time)/ 10000);
+    } else {
+        generateInventory();
+    }
     // hide all pots except first one
-    for (let i = 0; i < 8; i++) {
+    for (let i = 0; i < gameConfig.availablePots.length; i++) {
         if (gameConfig.availablePots[i] === 0)
         document.getElementById('cube' + i).style.visibility = 'hidden';
+        
+        // if a plant was in the middle of growing 
+        if (gameConfig.availablePots[i] === 2) {
+            startPot(i, gameConfig.seeds[i]);
+        }
     }
-    generateInventory();
     displayInventory();
     populateShop();
     var intervalID = setInterval(function () {
@@ -161,8 +184,17 @@ function update() {
 
 /// RESPONSIVE
 
+function startPot(potInd, seed) {
+    var canvas = $('#bg'+potInd);
+    gameConfig.trees[potInd] = new TreeGenerator(canvas, configurationExamples[seed], null, potInd, idleCreds);
+    gameConfig.trees[potInd].start();
+    if (gameConfig.trees[potInd].settings.alsoGrow){
+        gameConfig.trees[potInd] = new TreeGenerator(canvas, configurationExamples[seed].alsoGrow, null, potInd, idleCreds);
+        gameConfig.trees[potInd].start();
+    }
+}
+
 function clickSeed(seed) {
-    var set = null;
     var firstAvailable = gameConfig.availablePots.indexOf(1);
     if (firstAvailable >= 0) {
         gameConfig.availablePots[firstAvailable] = 2;
@@ -171,12 +203,15 @@ function clickSeed(seed) {
         console.warn('no available pots');
         return;
     }
+    // reset progress for that pot
+    progressRecording[firstAvailable] = [];
+    // save the seed
+    gameConfig.seeds[firstAvailable] = seed;
 
-    var canvas = $('#bg'+firstAvailable);
-    gameConfig.trees[firstAvailable] = new TreeGenerator(canvas, configurationExamples[seed], set, firstAvailable);
-    gameConfig.trees[firstAvailable].start();
+    startPot(firstAvailable, seed);
     playerControl.seeds.splice(playerControl.seeds.indexOf(seed), 1);
     displayInventory();
+    save();
 }
 
 function sell(index) {
@@ -185,7 +220,6 @@ function sell(index) {
         gameConfig.trees[index].clear(); // TODO: catch error
         gameConfig.values[index] = 0;
         document.getElementById('plantName' + index).innerText = '';
-
 }
 
 function buy(seed, cost) {
@@ -199,6 +233,7 @@ function buy(seed, cost) {
     } else {
         console.warn('Ain\'t got cash)');
     }
+    save();
 }
 
 function buyPot() {
@@ -215,6 +250,7 @@ function buyPot() {
     } else {
         console.warn('Ain\'t got cash)');
     }
+    save();
 }
 
 function buyUpgrade() {
@@ -222,10 +258,31 @@ function buyUpgrade() {
     if (playerControl.money >= price) {
         playerControl.money -= price;
 
-        playerControl.upgradesPurchased++
+        playerControl.upgradesPurchased++;
         populateSeedShop();
+        populateUpgradeShop();
 
     } else {
         console.warn('Ain\'t got cash)');
     }
+    save();
 }
+
+// Save/Load
+function save() {
+    if (resetting) return;
+
+    var saveData = {};
+    saveData.time = new Date().getTime();
+    saveData.playerControl = playerControl;
+    saveData.gameConfig = gameConfig;
+    saveData.progressRecording = progressRecording;
+    localStorage.saveData = JSON.stringify(saveData);
+}
+function reset() {
+    localStorage.saveData = JSON.stringify({});
+    resetting = true;
+}
+window.onbeforeunload = function(){
+    save();
+ }

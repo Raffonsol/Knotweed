@@ -75,6 +75,10 @@
         flex-wrap: wrap;
         justify-content: flex-start;
     }
+    #saveBttn {
+        bottom: 0;
+        position: absolute;
+    }
 </style>
 
 <body>
@@ -91,6 +95,7 @@
         <div id="potShop"></div>
         <div id="upgradeShop"></div>
     </div>
+    <button id="saveBttn" onclick="reset()">Reset</button>
 </div>
 
 <div id="gameBox">
@@ -158,6 +163,14 @@
         Value: <span id="value7">0</span>
         <button onclick="sell(7)">Sell</button>
         <span id="plantName7"></span>
+    </div>
+    <div class="cube" id="cube8">
+        <canvas width="250%" height="300%" id="bg8" style="color:#09F"></canvas>
+        <div class="rectangle pot"></div>
+        <div class="trapezoid pot"></div>
+        Value: <span id="value8">0</span>
+        <button onclick="sell(8)">Sell</button>
+        <span id="plantName8"></span>
     </div>
 </div>
 <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.2.1/jquery.min.js"></script>
