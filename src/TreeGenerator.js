@@ -56,7 +56,7 @@ var TreeGenerator = function (canvas, opts, settings, potIndex, creds) {
             openTillLife: 0,
 
             //constants
-            realTimeRate: 1, // the higher the slower. 1 for testing, 15 for game time
+            realTimeRate: 15, // the higher the slower. 1 for testing, 15 for game time
             realTime: true, // Slow growth mode
             initialWidth: 5, // Initial branch width
 
