@@ -17,9 +17,14 @@ var shop = {
                 trimCost: 0.05,
             },
             {
-                name: 'Mistyweed',
+                name: 'Sunflower',
                 price: 1.20,
                 chance: 0.15
+            },
+            {
+                name: 'Mistyweed',
+                price: 1.20,
+                chance: 0.0015
             },
             {
                 name: 'Pigweed',
@@ -111,6 +116,11 @@ var shop = {
         ],
         [
             {
+                name: 'Lavender',
+                price: 8.50,
+                chance: 0.4
+            },
+            {
                 name: 'Tillandsia',
                 price: 6.00,
                 chance: 0.4
@@ -154,6 +164,14 @@ var gameConfig = {
 
 var idleCreds = 0;
 var resetting = false;
+var plantActivity = [];
+
+function resetPlantActivity(index) {
+    plantActivity[index] = {
+        lastValue: gameConfig.values[index] || 0,
+        lastIncrease: Date.now()
+    };
+}
 
 // Create a new planter cube dynamically
 function createNewPlanter(index) {
@@ -294,6 +312,9 @@ function preGame() {
     gameConfig.plantCosts = gameConfig.plantCosts || gameConfig.seeds.map(function () { return 0; });
     while (gameConfig.plantCosts.length < gameConfig.seeds.length) {
         gameConfig.plantCosts.push(0);
+    }
+    for (let i = 0; i < gameConfig.availablePots.length; i++) {
+        resetPlantActivity(i);
     }
     
     // Generate all existing planter cubes
@@ -491,6 +512,7 @@ function update() {
     var growingPlantCount = 0;
     var donePlantCount = 0;
     var availablePotCount = 0;
+    var now = Date.now();
 
     // update values of plants
     for (let i = 0; i < gameConfig.values.length; i++) {
@@ -503,6 +525,21 @@ function update() {
         if (gameConfig.availablePots[i] === 1) {
             availablePotCount++;
         } else if (gameConfig.availablePots[i] === 2) {
+            if (!plantActivity[i]) {
+                resetPlantActivity(i);
+            }
+            if (gameConfig.values[i] > plantActivity[i].lastValue) {
+                plantActivity[i].lastValue = gameConfig.values[i];
+                plantActivity[i].lastIncrease = now;
+            } else if (gameConfig.values[i] < plantActivity[i].lastValue) {
+                plantActivity[i].lastValue = gameConfig.values[i];
+                plantActivity[i].lastIncrease = now;
+            }
+            if (gameConfig.trees[i]
+                && !gameConfig.trees[i].done
+                && now - plantActivity[i].lastIncrease >= 5000) {
+                gameConfig.trees[i].markDone();
+            }
             if (gameConfig.trees[i] && gameConfig.trees[i].done) {
                 donePlantCount++;
             } else {
@@ -538,22 +575,36 @@ function startPot(potInd, seed) {
     if (primaryTree.settings.alsoGrow){
         var secondaryTree = new TreeGenerator(canvas, configurationExamples[seed].alsoGrow, null, potInd, idleCreds);
         secondaryTree.start();
-        gameConfig.trees[potInd] = {
-            get done() {
-                return primaryTree.done && secondaryTree.done;
-            },
-            clear: function () {
-                primaryTree.clear();
+        gameConfig.trees[potInd] = createPlantController(primaryTree, secondaryTree);
+    } else {
+        gameConfig.trees[potInd] = createPlantController(primaryTree);
+    }
+}
+
+function createPlantController(primaryTree, secondaryTree) {
+    var timedOut = false;
+    return {
+        get done() {
+            return timedOut || (primaryTree.done && (!secondaryTree || secondaryTree.done));
+        },
+        markDone: function () {
+            timedOut = true;
+            save();
+        },
+        clear: function () {
+            primaryTree.clear();
+            if (secondaryTree) {
                 secondaryTree.clear();
-            },
-            trim: function () {
-                primaryTree.trim();
+            }
+        },
+        trim: function () {
+            timedOut = false;
+            primaryTree.trim();
+            if (secondaryTree) {
                 secondaryTree.trim();
             }
-        };
-    } else {
-        gameConfig.trees[potInd] = primaryTree;
-    }
+        }
+    };
 }
 
 function clickSeed(seed, seedCost) {
@@ -567,6 +618,7 @@ function clickSeed(seed, seedCost) {
     // save the seed
     gameConfig.seeds[firstAvailable] = seed;
     gameConfig.plantCosts[firstAvailable] = seedCost || 0;
+    resetPlantActivity(firstAvailable);
 
     startPot(firstAvailable, seed);
     playerControl.seeds.splice(playerControl.seeds.indexOf(seed), 1);
@@ -584,6 +636,7 @@ function sell(index) {
     gameConfig.values[index] = 0;
     gameConfig.seeds[index] = '';
     gameConfig.plantCosts[index] = 0;
+    plantActivity[index] = null;
     document.getElementById('plantName' + index).innerText = '';
     save();
 }
@@ -622,6 +675,7 @@ function trim(index) {
     playerControl.money -= trimCost;
     gameConfig.values[index] *= 0.5;
     gameConfig.trees[index].trim();
+    resetPlantActivity(index);
     if (Math.random() < getSeedingChance(gameConfig.seeds[index])) {
         playerControl.seeds.push(gameConfig.seeds[index]);
         playerControl.seedCosts.push(0);

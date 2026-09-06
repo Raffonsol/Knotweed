@@ -210,9 +210,9 @@ var configurationExamples = {
             lifeBeforeLeafing: 30,
             loss: 0.02,
             baseLoss: 0.0009,
+            mainLoss: 0.00001,
             minSleep: 10,
             branchLoss: 0.9,
-            mainLoss: 0.00001,
             speed: 0.3,
             newBranch: 0.3,
             leaves: 0.00001,
@@ -378,7 +378,7 @@ var configurationExamples = {
                 branchStrengthAfterTrunkDeath: 0.2,
                 heightBeforeBranchingBasedOnWidth: 0,
                 heightBeforeBranchingBasedOnHeight: 59,
-                lifeBeforeLeafing: 40,
+                lifeBeforeLeafing: 0,
                 loss: 0.02,
                 baseLoss: 0.0119,
                 minSleep: 10,
@@ -590,7 +590,7 @@ var configurationExamples = {
             branchStrengthAfterTrunkDeath: 0.05,
             heightBeforeBranchingBasedOnWidth: 0,
             heightBeforeBranchingBasedOnHeight: 0,
-            lifeBeforeLeafing: 10,
+            lifeBeforeLeafing: 1,
             loss: 0.002,
             baseLoss: 0.09,
             minSleep: 10,
@@ -652,7 +652,7 @@ var configurationExamples = {
                 leafWorth: 0.9,
             },
         },
-        Tillandsia: // 4.30
+        Tillandsia: 
         {
             upwardTendency: -0.11,
             tendencyAffectsMainBranch: true,
@@ -711,7 +711,7 @@ var configurationExamples = {
                 // realTimeRate:1,
             }
         },
-        Sativa: //7.20
+        Sativa: 
         {
             upwardTendency: 0.07,
             branchStrengthAfterTrunkDeath: 0.2,
@@ -741,6 +741,75 @@ var configurationExamples = {
             leafThickness: 2,
             leafType: 'lobed',
             seedingChance: 0.01,
+        },
+         Sunflower: // 1.20
+        {
+            upwardTendency: 0.12,
+            branchStrengthAfterTrunkDeath: 0.2,
+            heightBeforeBranchingBasedOnWidth: 0,
+            heightBeforeBranchingBasedOnHeight: 4,
+            lifeBeforeLeafing: 5,
+            loss: 0.02,
+            baseLoss: 0.0009,
+            minSleep: 10,
+            branchLoss: 0.1,
+            mainLoss: 0.97,
+            speed: 0.3,
+            newBranch: 0.1,
+            leaves: 0.90,
+            downyLeaves: true,
+            downyCoefficient: 3.5,
+            maxLife: 70,
+            treeColor: 'rgb(110, 130, 60)',
+            leafColor: 'rgb(146, 191, 63)',
+            fillColor: 'rgb(129, 168, 56)',
+            worth: 2.5,
+            initialWidth: 10,
+            leafSize: 9.4,
+            leafThickness: 4,
+            leafOnTip: {
+                leafColor: 'rgb(247, 255, 9)',
+                fillColor: 'rgb(91, 42, 33)',
+                leafType: 'lobed',
+                leafSize: 117.4,
+                leafThickness: 8,
+                leafSharpness: 0.3,
+                onlyOnMain: true
+            }
+        },
+         Lavender: //
+        {
+            upwardTendency: 0.12,
+            branchStrengthAfterTrunkDeath: 0.2,
+            heightBeforeBranchingBasedOnWidth: 0,
+            heightBeforeBranchingBasedOnHeight: 24,
+            lifeBeforeLeafing: 5,
+            loss: 0.02,
+            baseLoss: 0.0009,
+            minSleep: 10,
+            branchLoss: 0.1,
+            mainLoss: 0.97,
+            speed: 0.3,
+            newBranch: 0.1,
+            leaves: 0.90,
+            downyLeaves: true,
+            downyCoefficient: 3.5,
+            maxLife: 70,
+            treeColor: 'rgb(55, 161, 43)',
+            leafColor: 'rgb(106, 188, 43)',
+            worth: 2.5,
+            leafWorth: 0.233,
+            initialWidth: 10,
+            leafSize: 3.4,
+            leafThickness: 4,
+            leafOnTip: {
+                lifeBeforeLeafing: 35,
+                leafColor: 'rgb(118, 52, 157)',
+                fillColor: 'rgb(112, 80, 155)',
+                leafSize: 12.4,
+                leafThickness: 1,
+                leafSharpness: 1,
+            }
         },
 };
 

@@ -152,7 +152,7 @@ var TreeGenerator = function (canvas, opts, settings, potIndex, creds) {
          */
         function branch(x, y, dx, dy, w, growthRate, lifetime, branchColor, notFirst) {
             if (!canvas.ctx || tg.done){
-                if (tg.settings.leafOnTip)foliage(x, y, (w - lifetime * tg.settings.loss)*tg.settings.mainLoss, tg.settings.leafColor, x * getRandom());
+                if (shouldDrawTipLeaf(notFirst))tipFoliage(x, y, (w - lifetime * tg.settings.loss)*tg.settings.mainLoss, x * getRandom());
                 return;
             }
             // console.log(notFirst);
@@ -177,7 +177,7 @@ var TreeGenerator = function (canvas, opts, settings, potIndex, creds) {
             }
             if (trunkLifeTime > tg.settings.maxLife * growthPower
                 || (tg.settings.maxBranchLife && branchLifeTime > tg.settings.maxBranchLife * growthPower)) {
-                if (tg.settings.leafOnTip)foliage(x, y, (w - lifetime * tg.settings.loss)*tg.settings.mainLoss, tg.settings.leafColor, x * getRandom());
+                if (shouldDrawTipLeaf(notFirst))tipFoliage(x, y, (w - lifetime * tg.settings.loss)*tg.settings.mainLoss, x * getRandom());
                 done(false);
                 return;
             }
@@ -252,7 +252,7 @@ var TreeGenerator = function (canvas, opts, settings, potIndex, creds) {
                     branch(x, y, dx, dy, w, growthRate, ++lifetime, branchColor, notFirst);
                 }, growthRate);
             } else  {
-                if (tg.settings.leafOnTip)foliage(x, y, (w - lifetime * tg.settings.loss), tg.settings.leafColor, x * getRandom());
+                if (shouldDrawTipLeaf(notFirst) )tipFoliage(x, y, (w - lifetime * tg.settings.loss), x * getRandom());
                 if (!notFirst) trunkDead = true;
             }
         }
@@ -316,42 +316,65 @@ var TreeGenerator = function (canvas, opts, settings, potIndex, creds) {
             canvas.ctx.stroke();
         }
 
-        function foliage(x, y, rad, color, dir) {
+        function shouldDrawTipLeaf(notFirst) {
+            var tipSettings = tg.settings.leafOnTip && typeof tg.settings.leafOnTip === 'object'
+                ? tg.settings.leafOnTip
+                : null;
+            return Boolean(tg.settings.leafOnTip)
+                && !(tipSettings && tipSettings.onlyOnMain && notFirst);
+        }
+
+        function tipFoliage(x, y, rad, dir) {
+            
+            var tipSettings = tg.settings.leafOnTip && typeof tg.settings.leafOnTip === 'object'
+                ? tg.settings.leafOnTip
+                : null;
+            if ((tipSettings?.lifeBeforeLeafing || 0) > trunkLifeTime) {
+                return;
+            }
+            var tipColor = tipSettings && tipSettings.leafColor !== undefined
+                ? tipSettings.leafColor
+                : tg.settings.leafColor;
+            foliage(x, y, rad, tipColor, dir, tipSettings);
+        }
+
+        function foliage(x, y, rad, color, dir, tipSettings) {
+            var leafSettings = tipSettings ? $.extend({}, tg.settings, tipSettings) : tg.settings;
 
             var saveLineWidth = canvas.ctx.lineWidth; // save line width
-            canvas.ctx.lineWidth = tg.settings.leafThickness === 0 ? canvas.ctx.lineWidth : tg.settings.leafThickness;
+            canvas.ctx.lineWidth = leafSettings.leafThickness === 0 ? canvas.ctx.lineWidth : leafSettings.leafThickness;
 
             canvas.ctx.save(); // save state
             canvas.ctx.beginPath();
 
             var rotation = dir;
 
-            var sizeToUse = getRandomIntInclusive(tg.settings.leafSize, tg.settings.leafSizeMax || tg.settings.leafSize);
+            var sizeToUse = getRandomIntInclusive(leafSettings.leafSize, leafSettings.leafSizeMax || leafSettings.leafSize);
 
-            if (tg.settings.downyLeaves) {
-                rotation = getRandom() * tg.settings.downyCoefficient - tg.settings.downyCoefficient / 2;
+            if (leafSettings.downyLeaves) {
+                rotation = getRandom() * leafSettings.downyCoefficient - leafSettings.downyCoefficient / 2;
             }
             canvas.ctx.translate(1, 0);
             canvas.ctx.scale(1, 1);
 
-            switch (tg.settings.leafType) {
+            switch (leafSettings.leafType) {
                 case 'mushroom':
                     canvas.ctx.ellipse(x, y, sizeToUse, sizeToUse, Math.PI+rotation, 0, Math.PI, false);
                     break;
                 case 'thin':
                     // canvas.ctx.ellipse(x, y, rad * sizeToUse, rad * sizeToUse, rotation + 3, 1, 2, false);
-                    canvas.ctx.ellipse(x, y, Math.sqrt(rad) * sizeToUse / 5, Math.sqrt(rad) * tg.settings.leafSharpness * sizeToUse, rotation, 0, Math.PI, false);
+                    canvas.ctx.ellipse(x, y, Math.sqrt(rad) * sizeToUse / 5, Math.sqrt(rad) * leafSettings.leafSharpness * sizeToUse, rotation, 0, Math.PI, false);
                     break;
                 case 'oval':
                     var ovalRadiusX = Math.sqrt(rad) * sizeToUse / 5;
-                    var ovalRadiusY = Math.sqrt(rad) * tg.settings.leafSharpness * sizeToUse / 5;
+                    var ovalRadiusY = Math.sqrt(rad) * leafSettings.leafSharpness * sizeToUse / 5;
                     var ovalCenterX = x + Math.sin(rotation) * ovalRadiusY;
                     var ovalCenterY = y - Math.cos(rotation) * ovalRadiusY;
                     canvas.ctx.ellipse(ovalCenterX, ovalCenterY, ovalRadiusX, ovalRadiusY, rotation, 0, Math.PI * 2, false);
                     break;
                 case 'lobed':
                     var lobedScale = Math.sqrt(rad) * sizeToUse / 5;
-                    var lobedSharpness = Math.max(0.25, Number(tg.settings.leafSharpness) || 1);
+                    var lobedSharpness = Math.max(0.25, Number(leafSettings.leafSharpness) || 1);
                     var lobedPointScale = Math.max(0.65, Math.min(1.8, Math.sqrt(lobedSharpness)));
                     canvas.ctx.translate(x, y);
                     canvas.ctx.rotate(rotation);
@@ -379,17 +402,17 @@ var TreeGenerator = function (canvas, opts, settings, potIndex, creds) {
                     break;
                 default:
                     // canvas.ctx.ellipse(x, y, Math.sqrt(rad) * sizeToUse, Math.sqrt(rad) * 5 * sizeToUse, rotation, 0, Math.PI, false);
-                    canvas.ctx.ellipse(x, y, Math.sqrt(rad) * sizeToUse, Math.sqrt(rad) * tg.settings.leafSharpness * sizeToUse, rotation, 0, Math.PI, false);
+                    canvas.ctx.ellipse(x, y, Math.sqrt(rad) * sizeToUse, Math.sqrt(rad) * leafSettings.leafSharpness * sizeToUse, rotation, 0, Math.PI, false);
                     break;
             }
-            if (tg.settings.leafWorth){
-                addValue( 1 * tg.settings.leafWorth);
+            if (leafSettings.leafWorth){
+                addValue( 1 * leafSettings.leafWorth);
             }
 
             canvas.ctx.lineWidth = saveLineWidth;
             canvas.ctx.restore(); // restore to original state
-            if (tg.settings.fillColor) {
-                canvas.ctx.fillStyle = tg.settings.fillColor;
+            if (leafSettings.fillColor) {
+                canvas.ctx.fillStyle = leafSettings.fillColor;
                 canvas.ctx.fill();
             }
             canvas.ctx.strokeStyle = color;
