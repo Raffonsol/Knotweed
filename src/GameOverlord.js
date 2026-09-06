@@ -1,20 +1,142 @@
 var startValues = {
-    seeds: ['Knotweed', 'Blackthorn', ],
+    seeds: ['Knotweed', 'Bamboo'],
 };
 var shop = {
-    options0: ['Knotweed', 'RedKnotweed', 'Mistyweed', 'Swampweed', 'CherryBlossom', 'DesertWeed', 'Bamboo'],
-    prices0: [0.10,/*     */0.35,/*      */1.20,/*    */2.00,/*    */5.00,/*        */2.90,/*     */0.30],
-    options1: ['Crabgrass', 'Yucca', 'NorfolkPine', 'Porcini', 'CherryBlossom', 'Blackthorn', 'AloeVera'],
-    prices1: [0.15,/*     */0.50,/*      */2.50,/*    */7.20,/*    */5.00,/*        */1.20,/*     */4.30],
-    options2: ['PeaceLily', 'CottonPlant', 'Cypress', 'Pachira', 'Bonsai'],
-    prices2: [10.25,/*    */4,/*         */39.65,/*     */9,/*    */18.5],
+    seedsAndPrices: [
+        [
+            {
+                name: 'Knotweed',
+                price: 0.10,
+                chance: 0.8,
+                trimCost: 0.05,
+            },
+            {
+                name: 'RedKnotweed',
+                price: 0.35,
+                chance: 0.5,
+                trimCost: 0.05,
+            },
+            {
+                name: 'Mistyweed',
+                price: 1.20,
+                chance: 0.15
+            },
+            {
+                name: 'Pigweed',
+                price: 2.00,
+                chance: 0.05
+            },
+            {
+                name: 'Stinknet',
+                price: 2.90,
+                chance: 0.03
+            }
+        ],
+        [
+            {
+                name: 'Crabgrass',
+                price: 0.15,
+                chance: 0.6
+            },
+            {
+                name: 'Bamboo',
+                price: 0.30,
+                chance: 0.3
+            },
+            {
+                name: 'Blackthorn',
+                price: 1.20,
+                chance: 0.12
+            },
+            {
+                name: 'CherryBlossom',
+                price: 5.00,
+                chance: 0.01
+            },
+            {
+                name: 'AloeVera',
+                price: 4.30,
+                chance: 0.02
+            }
+        ],
+        [
+            {
+                name: 'Yucca',
+                price: 0.50,
+                chance: 0.6
+            },
+            {
+                name: 'NorfolkPine',
+                price: 2.50,
+                chance: 0.3
+            },
+            {
+                name: 'Kumquat',
+                price: 3.15,
+                chance: 0.1
+            },
+            {
+                name: 'Porcini',
+                price: 7.20,
+                chance: 0.05
+            },
+            {
+                name: 'Pachira',
+                price: 9.00,
+                chance: 0.01
+            }
+        ],
+        [
+            {
+                name: 'CottonPlant',
+                price: 4.00,
+                chance: 0.5
+            },
+            {
+                name: 'PeaceLily',
+                price: 10.25,
+                chance: 0.05
+            },
+            {
+                name: 'Polypore',
+                price: 7.50,
+                chance: 0.1
+            },
+            {
+                name: 'Cypress',
+                price: 39.65,
+                chance: 0.02,
+                trimCost: 1.20,
+            },
+        ],
+        [
+            {
+                name: 'Tillandsia',
+                price: 6.00,
+                chance: 0.4
+            },
+            {
+                name: 'Sativa',
+                price: 7.10,
+                chance: 0.4,
+                trimCost: 1.00,
+            },
+            {
+                name: 'Bonsai',
+                price: 18.5,
+                chance: 0.02
+            },
+        ]   
+    ],
     potInitialPrice: 10,
     potIncrementPrice: 13,
-    upgradePrices: [15, 50, 410, 1900],
+    upgradePrices: [15, 50, 100, 300, 1000, 5000],
 };
 
 var playerControl = {
     seeds: [],
+    seedCosts: [],
+    favoriteSeeds: [],
     customSeeds: [],
     money: 0,
     potsPurchased: 0,
@@ -23,18 +145,130 @@ var playerControl = {
 
 var gameConfig = {
     // 0 = now owned, 1 = owned but not planted, 2 = growing plant
-    availablePots: [1, 1, 0, 0, 0, 0, 0, 0,0],
-    values: [0, 0, 0, 0, 0, 0, 0, 0,0],
-    seeds: ['','','','','','','','',''],
-    trees: [null, null, null, null, null, null, null, null, null],
+    availablePots: [1, 1],
+    values: [0, 0],
+    seeds: ['',''],
+    plantCosts: [0, 0],
+    trees: [null, null],
 };
-// array of arrays, each is the list of random numbers so far in a pot
-var progressRecording = [
-    [], [], [], [], [] ,[], [], [], []
-];
 
 var idleCreds = 0;
 var resetting = false;
+
+// Create a new planter cube dynamically
+function createNewPlanter(index) {
+    var gameBox = document.getElementById('gameBox');
+    
+    // Create the cube div
+    var cube = document.createElement('div');
+    cube.className = 'cube';
+    cube.id = 'cube' + index;
+    
+    // Create the canvas
+    var canvas = document.createElement('canvas');
+    canvas.width = 250;
+    canvas.height = 300;
+    canvas.id = 'bg' + index;
+    canvas.style.color = '#09F';
+    cube.appendChild(canvas);
+    
+    // Create pot visuals
+    var rectangle = document.createElement('div');
+    rectangle.className = 'rectangle pot';
+    cube.appendChild(rectangle);
+    
+    var trapezoid = document.createElement('div');
+    trapezoid.className = 'trapezoid pot';
+    cube.appendChild(trapezoid);
+    
+    // Add planter information row
+    var infoRow = document.createElement('div');
+    infoRow.className = 'planter-row';
+
+    var plantName = document.createElement('span');
+    plantName.id = 'plantName' + index;
+    infoRow.appendChild(plantName);
+
+    var valueSpan = document.createElement('span');
+    valueSpan.id = 'value' + index;
+    valueSpan.innerText = 'Value: $0.00';
+    infoRow.appendChild(valueSpan);
+    cube.appendChild(infoRow);
+
+    // Add planter actions row
+    var actionsRow = document.createElement('div');
+    actionsRow.className = 'planter-row';
+
+    var sellBtn = document.createElement('button');
+    sellBtn.onclick = (function(idx) {
+        return function() { sell(idx); };
+    })(index);
+    sellBtn.innerHTML = 'Sell';
+    actionsRow.appendChild(sellBtn);
+
+    var trimBtn = document.createElement('button');
+    trimBtn.id = 'trimBtn' + index;
+    trimBtn.innerHTML = 'Prune';
+    trimBtn.style.display = 'none';
+    trimBtn.onclick = (function(idx) {
+        return function() { trim(idx); };
+    })(index);
+    actionsRow.appendChild(trimBtn);
+    cube.appendChild(actionsRow);
+    
+    var controls = document.getElementById('planterControls');
+    if (controls) {
+        gameBox.insertBefore(cube, controls);
+    } else {
+        gameBox.appendChild(cube);
+    }
+}
+
+function createPlanterControls() {
+    var gameBox = document.getElementById('gameBox');
+    var controls = document.createElement('div');
+    controls.className = 'cube';
+    controls.id = 'planterControls';
+
+    var heading = document.createElement('div');
+    heading.innerText = 'Summary';
+    heading.style.marginBottom = '12px';
+    controls.appendChild(heading);
+
+    var metrics = [
+        ['Total sell price', 'totalPlantValue', '$0.00'],
+        ['Spent on current plants', 'totalPlantCost', '$0.00'],
+        ['Growing plants', 'growingPlantCount', '0'],
+        ['Finished plants', 'donePlantCount', '0'],
+        ['Available pots', 'availablePotCount', '0']
+    ];
+    for (let metric of metrics) {
+        var metricRow = document.createElement('div');
+        metricRow.innerText = metric[0] + ': ';
+
+        var metricValue = document.createElement('span');
+        metricValue.id = metric[1];
+        metricValue.innerText = metric[2];
+        metricRow.appendChild(metricValue);
+        controls.appendChild(metricRow);
+    }
+
+    var buttons = document.createElement('div');
+    buttons.style.marginTop = '12px';
+
+    var sellAllButton = document.createElement('button');
+    sellAllButton.innerText = 'Sell all';
+    sellAllButton.addEventListener('click', sellAll);
+    buttons.appendChild(sellAllButton);
+
+    var resetButton = document.createElement('button');
+    resetButton.innerText = 'Reset';
+    resetButton.addEventListener('click', reset);
+    buttons.appendChild(resetButton);
+    controls.appendChild(buttons);
+
+    gameBox.appendChild(controls);
+}
 
 function preGame() {
     var saveData = JSON.parse(localStorage.saveData || null) || {};
@@ -42,22 +276,36 @@ function preGame() {
     if (saveData.gameConfig) {
         gameConfig = saveData.gameConfig;
         playerControl = saveData.playerControl;
-        progressRecording = saveData.progressRecording;
+
+        // Reset values for any plants that were mid-growth (they will be restarted fresh below)
+        for (let i = 0; i < gameConfig.availablePots.length; i++) {
+            if (gameConfig.availablePots[i] === 2) {
+                gameConfig.values[i] = 0;
+            }
+        }
 
         idleCreds = Math.floor((new Date().getTime() - saveData.time)/ 10000);
     } else {
         generateInventory();
     }
-    // hide all pots except first one
+
+    playerControl.seedCosts = playerControl.seedCosts || playerControl.seeds.map(function () { return 0; });
+    playerControl.favoriteSeeds = playerControl.favoriteSeeds || [];
+    gameConfig.plantCosts = gameConfig.plantCosts || gameConfig.seeds.map(function () { return 0; });
+    while (gameConfig.plantCosts.length < gameConfig.seeds.length) {
+        gameConfig.plantCosts.push(0);
+    }
+    
+    // Generate all existing planter cubes
     for (let i = 0; i < gameConfig.availablePots.length; i++) {
-        if (gameConfig.availablePots[i] === 0)
-        document.getElementById('cube' + i).style.visibility = 'hidden';
+        createNewPlanter(i);
         
-        // if a plant was in the middle of growing 
+        // if a plant was in the middle of growing, restart it with fresh randomness
         if (gameConfig.availablePots[i] === 2) {
             startPot(i, gameConfig.seeds[i]);
         }
     }
+    createPlanterControls();
     displayInventory();
     populateShop();
     var intervalID = setInterval(function () {
@@ -69,6 +317,7 @@ function preGame() {
 
 function generateInventory() {
     playerControl.seeds = startValues.seeds;
+    playerControl.seedCosts = startValues.seeds.map(function () { return 0; });
 }
 
 function displayInventory() {
@@ -81,7 +330,7 @@ function displayInventory() {
         inv.appendChild(button);
 
         button.addEventListener("click", function () {
-            clickSeed(playerControl.seeds[i]);
+            clickSeed(playerControl.seeds[i], playerControl.seedCosts[i]);
         });
     }
 }
@@ -95,39 +344,102 @@ function populateShop(){
 
 function populateSeedShop() {
     document.getElementById("seedShop").innerHTML = '---<br>';
+    var availableSeeds = [];
+
     for (let j = 0; j <= playerControl.upgradesPurchased; j++) {
+        var seedOptions = shop.seedsAndPrices[j];
+        var availableIndexes = [];
 
+        while (availableIndexes.length < Math.min(2, seedOptions.length)) {
+            var totalChance = 0;
+            for (let i = 0; i < seedOptions.length; i++) {
+                if (!availableIndexes.includes(i)) {
+                    totalChance += Math.max(0, Number(seedOptions[i].chance) || 0);
+                }
+            }
 
-        var availableIndexes = [0, 0];
-        // find some options randomly
-        for (let i = Date.now().toLocaleString().length; i > 0; i--) {
-            var value = Date.now().toLocaleString().substr(i, i + 1);
-            if (shop['options'+j][value]) {
-                availableIndexes[0] = value;
-                break;
+            var selectedIndex;
+            if (totalChance > 0) {
+                var chanceRoll = Math.random() * totalChance;
+                for (let i = 0; i < seedOptions.length; i++) {
+                    if (availableIndexes.includes(i)) {
+                        continue;
+                    }
+
+                    chanceRoll -= Math.max(0, Number(seedOptions[i].chance) || 0);
+                    if (chanceRoll < 0) {
+                        selectedIndex = i;
+                        break;
+                    }
+                }
+            } else {
+                var remainingIndexes = [];
+                for (let i = 0; i < seedOptions.length; i++) {
+                    if (!availableIndexes.includes(i)) {
+                        remainingIndexes.push(i);
+                    }
+                }
+                selectedIndex = remainingIndexes[Math.floor(Math.random() * remainingIndexes.length)];
+            }
+
+            if (selectedIndex !== undefined) {
+                availableIndexes.push(selectedIndex);
             }
         }
-        for (let i = 0; i < Date.now().toLocaleString().length; i++) {
-            var value = Date.now().toLocaleString().substr(i, i + 1);
-            if (shop['options'+j][value] && value != availableIndexes[0]) {
-                availableIndexes[1] = value;
-                break;
-            }
-        }
 
-        // show in the html
         for (let i = 0; i < availableIndexes.length; i++) {
-            var button = document.createElement("button");
-            button.innerHTML = shop['options'+j][availableIndexes[i]] + ' $' + shop['prices'+j][availableIndexes[i]].toFixed(2);
-
-            var inv = document.getElementById("seedShop");
-            inv.appendChild(button);
-
-            button.addEventListener("click", function () {
-                buy(shop['options'+j][availableIndexes[i]], shop['prices'+j][availableIndexes[i]]);
-            });
+            availableSeeds.push(seedOptions[availableIndexes[i]]);
         }
     }
+
+    availableSeeds.sort(function (firstSeed, secondSeed) {
+        var firstFavoriteIndex = playerControl.favoriteSeeds.indexOf(firstSeed.name);
+        var secondFavoriteIndex = playerControl.favoriteSeeds.indexOf(secondSeed.name);
+        return secondFavoriteIndex - firstFavoriteIndex;
+    });
+
+    // Show the combined list so favorites can move above every shop tier.
+    for (let seed of availableSeeds) {
+        var offer = document.createElement("div");
+        offer.className = 'seed-offer';
+
+        var button = document.createElement("button");
+        button.innerHTML = seed.name + ' $' + seed.price.toFixed(2);
+        offer.appendChild(button);
+
+        button.addEventListener("click", function () {
+            buy(seed.name, seed.price);
+        });
+
+        let favoriteButton = document.createElement("button");
+        var isFavorite = playerControl.favoriteSeeds.includes(seed.name);
+        favoriteButton.className = 'favorite-button' + (isFavorite ? ' active' : '');
+        favoriteButton.innerText = '*';
+        favoriteButton.title = isFavorite ? 'Remove favorite' : 'Favorite ' + seed.name;
+        favoriteButton.setAttribute('aria-label', favoriteButton.title);
+        favoriteButton.addEventListener("click", function () {
+            toggleFavorite(seed.name, favoriteButton);
+        });
+        offer.appendChild(favoriteButton);
+        document.getElementById("seedShop").appendChild(offer);
+    }
+}
+
+function toggleFavorite(seedName, favoriteButton) {
+    var favoriteIndex = playerControl.favoriteSeeds.indexOf(seedName);
+    if (favoriteIndex >= 0) {
+        playerControl.favoriteSeeds.splice(favoriteIndex, 1);
+    } else {
+        playerControl.favoriteSeeds.push(seedName);
+    }
+
+    if (favoriteButton) {
+        var isFavorite = favoriteIndex < 0;
+        favoriteButton.classList.toggle('active', isFavorite);
+        favoriteButton.title = isFavorite ? 'Remove favorite' : 'Favorite ' + seedName;
+        favoriteButton.setAttribute('aria-label', favoriteButton.title);
+    }
+    save();
 }
 
 function populatePotShop() {
@@ -174,11 +486,45 @@ function update() {
     // update $$
     document.getElementById('money').innerHTML = playerControl.money.toFixed(2);
 
+    var totalPlantValue = 0;
+    var totalPlantCost = 0;
+    var growingPlantCount = 0;
+    var donePlantCount = 0;
+    var availablePotCount = 0;
+
     // update values of plants
     for (let i = 0; i < gameConfig.values.length; i++) {
-        if (gameConfig.availablePots[i] >= 1)
-            document.getElementById('value' + i).innerText = gameConfig.values[i].toFixed(2);
+        if (gameConfig.availablePots[i] >= 1) {
+            document.getElementById('value' + i).innerText = 'Value: $' + gameConfig.values[i].toFixed(2);
+        }
+
+        totalPlantValue += gameConfig.values[i];
+        totalPlantCost += gameConfig.plantCosts[i] || 0;
+        if (gameConfig.availablePots[i] === 1) {
+            availablePotCount++;
+        } else if (gameConfig.availablePots[i] === 2) {
+            if (gameConfig.trees[i] && gameConfig.trees[i].done) {
+                donePlantCount++;
+            } else {
+                growingPlantCount++;
+            }
+        }
+
+        var trimButton = document.getElementById('trimBtn' + i);
+        var tree = gameConfig.trees[i];
+        if (trimButton && gameConfig.availablePots[i] === 2 && tree && !tree.done) {
+            trimButton.innerText = 'Prune $' + getTrimCost(gameConfig.seeds[i]).toFixed(2);
+            trimButton.style.display = 'inline-block';
+        } else if (trimButton) {
+            trimButton.style.display = 'none';
+        }
     }
+
+    document.getElementById('totalPlantValue').innerText = '$' + totalPlantValue.toFixed(2);
+    document.getElementById('totalPlantCost').innerText = '$' + totalPlantCost.toFixed(2);
+    document.getElementById('growingPlantCount').innerText = growingPlantCount;
+    document.getElementById('donePlantCount').innerText = donePlantCount;
+    document.getElementById('availablePotCount').innerText = availablePotCount;
 
 }
 
@@ -186,16 +532,31 @@ function update() {
 
 function startPot(potInd, seed) {
     var canvas = $('#bg'+potInd);
-    gameConfig.trees[potInd] = new TreeGenerator(canvas, configurationExamples[seed], null, potInd, idleCreds);
-    gameConfig.trees[potInd].start();
+    var primaryTree = new TreeGenerator(canvas, configurationExamples[seed], null, potInd, idleCreds);
+    primaryTree.start();
     document.getElementById('plantName' + potInd).innerText = seed;
-    if (gameConfig.trees[potInd].settings.alsoGrow){
-        gameConfig.trees[potInd] = new TreeGenerator(canvas, configurationExamples[seed].alsoGrow, null, potInd, idleCreds);
-        gameConfig.trees[potInd].start();
+    if (primaryTree.settings.alsoGrow){
+        var secondaryTree = new TreeGenerator(canvas, configurationExamples[seed].alsoGrow, null, potInd, idleCreds);
+        secondaryTree.start();
+        gameConfig.trees[potInd] = {
+            get done() {
+                return primaryTree.done && secondaryTree.done;
+            },
+            clear: function () {
+                primaryTree.clear();
+                secondaryTree.clear();
+            },
+            trim: function () {
+                primaryTree.trim();
+                secondaryTree.trim();
+            }
+        };
+    } else {
+        gameConfig.trees[potInd] = primaryTree;
     }
 }
 
-function clickSeed(seed) {
+function clickSeed(seed, seedCost) {
     var firstAvailable = gameConfig.availablePots.indexOf(1);
     if (firstAvailable >= 0) {
         gameConfig.availablePots[firstAvailable] = 2;
@@ -203,10 +564,9 @@ function clickSeed(seed) {
         console.warn('no available pots');
         return;
     }
-    // reset progress for that pot
-    progressRecording[firstAvailable] = [];
     // save the seed
     gameConfig.seeds[firstAvailable] = seed;
+    gameConfig.plantCosts[firstAvailable] = seedCost || 0;
 
     startPot(firstAvailable, seed);
     playerControl.seeds.splice(playerControl.seeds.indexOf(seed), 1);
@@ -215,11 +575,67 @@ function clickSeed(seed) {
 }
 
 function sell(index) {
-        playerControl.money += gameConfig.values[index];
-        gameConfig.availablePots[index] = 1;
-        gameConfig.trees[index].clear(); // TODO: catch error
-        gameConfig.values[index] = 0;
-        document.getElementById('plantName' + index).innerText = '';
+    playerControl.money += gameConfig.values[index];
+    gameConfig.availablePots[index] = 1;
+    if (gameConfig.trees[index]) {
+        gameConfig.trees[index].clear();
+    }
+    gameConfig.trees[index] = null;
+    gameConfig.values[index] = 0;
+    gameConfig.seeds[index] = '';
+    gameConfig.plantCosts[index] = 0;
+    document.getElementById('plantName' + index).innerText = '';
+    save();
+}
+
+function getTrimCost(seedName) {
+    for (let tier of shop.seedsAndPrices) {
+        for (let seed of tier) {
+            if (seed.name === seedName) {
+                return typeof seed.trimCost === 'number' ? seed.trimCost : 0.50;
+            }
+        }
+    }
+    return 0.50;
+}
+
+function getSeedingChance(seedName) {
+    var configuration = configurationExamples[seedName];
+    return configuration && typeof configuration.seedingChance === 'number'
+        ? configuration.seedingChance
+        : 0;
+}
+
+function trim(index) {
+    if (gameConfig.availablePots[index] !== 2
+        || !gameConfig.trees[index]
+        || gameConfig.trees[index].done) {
+        return;
+    }
+
+    var trimCost = getTrimCost(gameConfig.seeds[index]);
+    if (playerControl.money < trimCost) {
+        console.warn('Not enough money to trim this plant');
+        return;
+    }
+
+    playerControl.money -= trimCost;
+    gameConfig.values[index] *= 0.5;
+    gameConfig.trees[index].trim();
+    if (Math.random() < getSeedingChance(gameConfig.seeds[index])) {
+        playerControl.seeds.push(gameConfig.seeds[index]);
+        playerControl.seedCosts.push(0);
+        displayInventory();
+    }
+    save();
+}
+
+function sellAll() {
+    for (let i = 0; i < gameConfig.availablePots.length; i++) {
+        if (gameConfig.availablePots[i] === 2) {
+            sell(i);
+        }
+    }
 }
 
 function buy(seed, cost) {
@@ -227,7 +643,12 @@ function buy(seed, cost) {
     if (playerControl.money >= cost) {
         playerControl.money -= cost;
         playerControl.seeds.push(seed);
-        displayInventory();
+        playerControl.seedCosts.push(cost);
+        if (document.getElementById('autoPlant').checked && gameConfig.availablePots.includes(1)) {
+            clickSeed(seed, cost);
+        } else {
+            displayInventory();
+        }
         populateSeedShop();
 
     } else {
@@ -241,10 +662,20 @@ function buyPot() {
     if (playerControl.money >= price) {
         playerControl.money -= price;
 
-        var nextPot = gameConfig.availablePots.indexOf(0);
-        gameConfig.availablePots[nextPot] = 1;
+        // Create a new planter at the current length
+        var newIndex = gameConfig.availablePots.length;
+        
+        // Extend all the arrays
+        gameConfig.availablePots.push(1);  // New pot is empty but available
+        gameConfig.values.push(0);
+        gameConfig.seeds.push('');
+        gameConfig.plantCosts.push(0);
+        gameConfig.trees.push(null);
+        
+        // Create the new planter cube in the DOM
+        createNewPlanter(newIndex);
+        
         playerControl.potsPurchased++;
-        document.getElementById('cube'+nextPot).style.visibility = 'visible';
         populatePotShop();
 
     } else {
@@ -276,12 +707,12 @@ function save() {
     saveData.time = new Date().getTime();
     saveData.playerControl = playerControl;
     saveData.gameConfig = gameConfig;
-    saveData.progressRecording = progressRecording;
     localStorage.saveData = JSON.stringify(saveData);
 }
 function reset() {
     localStorage.saveData = JSON.stringify({});
     resetting = true;
+    window.location.reload();
 }
 window.onbeforeunload = function(){
     save();

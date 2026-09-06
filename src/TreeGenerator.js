@@ -1,32 +1,20 @@
-/**
- * TreeGenerator - 2D Tree generation in JavaScript
- * Documentation in comments
- *
- * This requires a farily modern browser, at least with support for the canvas object.
- *
- * @author Alejandro U. Alvarez
- * @version 1.0
- */
 
-/**
- * Documentation in the source code. Private methods are defined
- * as local functions, while exposed ones are members of the returned object tg.
- * @param {Object} canvas jQuery DOM object for the canvas element
- * @param {Object} opts   Settings array, see default values and explanation below
- */
 var TreeGenerator = function (canvas, opts, settings, potIndex, creds) {
         var trunkWidth = 0;
         var trunkLifeTime = 0;
         var branchLifeTime = 0;
         var trunkDead = false;
         var tg = {};
+        var rewinding = false;
+        var rewindTargetLifetime = 0;
+        var growthPower = 1;
 
 
         var goingValue = 0;
         var loadingSpeed = true;
+        var normalSpeed = 0;
 
         var increasedSpeed = 5;
-        var normalSpeed = 0;
 
         var growthCreds = creds || 0;
         
@@ -53,6 +41,7 @@ var TreeGenerator = function (canvas, opts, settings, potIndex, creds) {
             leafColor: 'rgba(0,255,0,1)',
             maxLife: 200,
             worth: 1,
+            leafWorth: 0,
             maxValue: 99999,
             sources: 1,
             leafSize: 0.7, // multiplier so go easy
@@ -67,7 +56,7 @@ var TreeGenerator = function (canvas, opts, settings, potIndex, creds) {
             openTillLife: 0,
 
             //constants
-            realTimeRate: 15, // the higher the slower. 1 for testing, 5 for game time
+            realTimeRate: 1, // the higher the slower. 1 for testing, 15 for game time
             realTime: true, // Slow growth mode
             initialWidth: 5, // Initial branch width
 
@@ -92,6 +81,15 @@ var TreeGenerator = function (canvas, opts, settings, potIndex, creds) {
             generation: null,
             fading: null
         };
+        var growthTimeouts = new Set();
+
+        function scheduleGrowth(callback, delay) {
+            var timeoutId = setTimeout(function () {
+                growthTimeouts.delete(timeoutId);
+                callback();
+            }, delay);
+            growthTimeouts.add(timeoutId);
+        }
 
         /**
          * Start generating trees at the specified interval. If none is specified
@@ -100,34 +98,27 @@ var TreeGenerator = function (canvas, opts, settings, potIndex, creds) {
          * @param  {int} fadeInterval Fade interval
          * @return {void}
          */
-        tg.start = function () {
+        tg.start = function (startingLifetime) {
             // Clear intervals
             tg.stop();
             var growthRate = 100;
-            
+            startingLifetime = Math.max(0, Math.floor(startingLifetime || 0));
             if (tg.settings.realTime) growthRate *= tg.settings.realTimeRate;
+            if (rewinding) growthRate = Math.max(25, growthRate / 5);
             normalSpeed = growthRate;
-            // grow fast while loading
-            if (progressRecording[potIndex][randomIndex]) {
-                loadingSpeed = true;
-                growthRate/=500;
-                increasedSpeed = growthRate;
-            } else {
-                loadingSpeed = false;
-            }
+            loadingSpeed = false;
 
-            branch(canvas.WIDTH / 2, canvas.HEIGHT, 0, -3, tg.settings.initialWidth, growthRate, 0, tg.settings.treeColor, false);
+            branch(canvas.WIDTH / 2, canvas.HEIGHT, 0, -3, tg.settings.initialWidth, growthRate, startingLifetime, tg.settings.treeColor, false);
             var initialLocRange = tg.settings.initialLocRange?tg.settings.initialLocRange:60;
 
             // for when there are multiple main branches
-            for (let i = 1; i < tg.settings.mainBranches; i++) {
-                branch((canvas.WIDTH / 2) + Math.floor(getRandom() * initialLocRange) - initialLocRange/2, canvas.HEIGHT, 0, -3, tg.settings.initialWidth, growthRate, 0, tg.settings.treeColor, false);
+            for (let i = 1; i < getRandomIntInclusive(tg.settings.mainBranches, tg.settings.mainBranchesMax || tg.settings.mainBranches); i++) {
+                branch((canvas.WIDTH / 2) + Math.floor(getRandom() * initialLocRange) - initialLocRange/2, canvas.HEIGHT, 0, -3, tg.settings.initialWidth, growthRate, startingLifetime, tg.settings.treeColor, false);
             }
             // for when there cna be extra main branches randomly
             for (let i = 0; i < Math.floor(getRandom()*tg.settings.extraBranches); i++) {
-                branch((canvas.WIDTH / 2) + Math.floor(getRandom() * initialLocRange) - initialLocRange/2, canvas.HEIGHT, 0, -3, tg.settings.initialWidth, growthRate, 0, tg.settings.treeColor, false);
+                branch((canvas.WIDTH / 2) + Math.floor(getRandom() * initialLocRange) - initialLocRange/2, canvas.HEIGHT, 0, -3, tg.settings.initialWidth, growthRate, startingLifetime, tg.settings.treeColor, false);
             }
-            
 
         };
 
@@ -138,7 +129,11 @@ var TreeGenerator = function (canvas, opts, settings, potIndex, creds) {
         tg.stop = function () {
             clearInterval(intervals.generation);
             clearInterval(intervals.fading);
-        };
+            growthTimeouts.forEach(function (timeoutId) {
+                clearTimeout(timeoutId);
+            });
+            growthTimeouts.clear();
+        }
 
         /**
          * Recursive function that generates the trees. This is the important part of the
@@ -158,8 +153,8 @@ var TreeGenerator = function (canvas, opts, settings, potIndex, creds) {
         function branch(x, y, dx, dy, w, growthRate, lifetime, branchColor, notFirst) {
             if (!canvas.ctx || tg.done){
                 if (tg.settings.leafOnTip)foliage(x, y, (w - lifetime * tg.settings.loss)*tg.settings.mainLoss, tg.settings.leafColor, x * getRandom());
-                 return;
-                }
+                return;
+            }
             // console.log(notFirst);
             canvas.ctx.lineWidth = w - lifetime * (notFirst ? tg.settings.loss : tg.settings.baseLoss);
             canvas.ctx.lineWidth = notFirst ? canvas.ctx.lineWidth * 0.90 : canvas.ctx.lineWidth;
@@ -175,9 +170,15 @@ var TreeGenerator = function (canvas, opts, settings, potIndex, creds) {
                 // add money
                 addValue( 0.01 * tg.settings.worth);
             }
-            if (trunkLifeTime > tg.settings.maxLife ||branchLifeTime >tg.settings.maxBranchLife) {
+            if (rewinding && trunkLifeTime >= rewindTargetLifetime) {
+                rewinding = false;
+                growthRate = 100 * (tg.settings.realTime ? tg.settings.realTimeRate : 1);
+                normalSpeed = growthRate;
+            }
+            if (trunkLifeTime > tg.settings.maxLife * growthPower
+                || (tg.settings.maxBranchLife && branchLifeTime > tg.settings.maxBranchLife * growthPower)) {
                 if (tg.settings.leafOnTip)foliage(x, y, (w - lifetime * tg.settings.loss)*tg.settings.mainLoss, tg.settings.leafColor, x * getRandom());
-                done();
+                done(false);
                 return;
             }
             canvas.ctx.beginPath();
@@ -222,16 +223,7 @@ var TreeGenerator = function (canvas, opts, settings, potIndex, creds) {
                 foliage(x, y, w, tg.settings.leafColor, x * getRandom());
             }
 
-            // check growth rate
-            if ((loadingSpeed && !progressRecording[potIndex][randomIndex])) {
-                if (growthCreds > 0) {
-                    growthCreds -=1;
-                } else {
-                    loadingSpeed = false;
-                    growthRate*=500;
-                    save();
-                }   
-            } else if ((!loadingSpeed && growthRate < (normalSpeed - 1))) {
+            if ((!loadingSpeed && growthRate < (normalSpeed - 1))) {
                 growthRate*=500;
             }
 
@@ -240,7 +232,7 @@ var TreeGenerator = function (canvas, opts, settings, potIndex, creds) {
             if (lifetime >
                 tg.settings.heightBeforeBranchingBasedOnWidth * w + getRandom() * tg.settings.heightBeforeBranchingBasedOnHeight
                 && getRandom() > tg.settings.newBranch) {
-                setTimeout(function () {
+                scheduleGrowth(function () {
                     // Indicate the birth of a new branch
                     if (tg.settings.indicateNewBranch) {
                         // circle(x, y, w, 'rgba(255,0,0,0.4)');
@@ -256,7 +248,7 @@ var TreeGenerator = function (canvas, opts, settings, potIndex, creds) {
                 && (!trunkDead || (trunkDead && getRandom() * lifetime <= trunkLifeTime * tg.settings.branchStrengthAfterTrunkDeath))
             // || (!notFirst && canvas.ctx.width !== mainWidth)
             ) {
-                setTimeout(function () {
+                scheduleGrowth(function () {
                     branch(x, y, dx, dy, w, growthRate, ++lifetime, branchColor, notFirst);
                 }, growthRate);
             } else  {
@@ -265,22 +257,14 @@ var TreeGenerator = function (canvas, opts, settings, potIndex, creds) {
             }
         }
 
-        function done() {
+        function done(stopGrowth) {
+            if (stopGrowth !== false) {
+                tg.stop();
+            }
             save();
             tg.done = true;
         }
 
-        function createFoliage(x, y, rad, color, dir, src) {
-            var img = new Image(tg.settings.leafSize * getRandom());
-            img.src = src;
-            img.style.transform = 'rotate(90deg)';
-            img.color = color;
-            img.width = (tg.settings.leafSize) * 40 * getRandom();
-            // canvas.ctx.save();
-            // canvas.ctx.rotate(1.2);
-            canvas.ctx.style = color;
-            canvas.ctx.drawImage(img, x, y, img.width, img.width);
-        }
 
 // -------------------------------//
 //       Internal functions       //
@@ -288,11 +272,31 @@ var TreeGenerator = function (canvas, opts, settings, potIndex, creds) {
 
 // Clear the canvas
         function clear() {
+            tg.stop();
             done();
             canvas.ctx.clearRect(0, 0 - canvas.HEIGHT / 2, canvas.WIDTH, canvas.HEIGHT*2);
         }
 
         tg.clear = () => clear();
+
+        tg.trim = function () {
+            var trimmedLifetime = Math.max(0, Math.floor(trunkLifeTime / 2));
+            growthPower *= 1.05;
+            tg.stop();
+            clear();
+            trunkLifeTime = 0;
+            branchLifeTime = 0;
+            trunkDead = false;
+            tg.done = false;
+            goingValue *= 0.5;
+            rewindTargetLifetime = trimmedLifetime;
+            rewinding = true;
+            tg.start();
+        };
+
+        tg.getProgress = function () {
+            return trunkLifeTime;
+        };
 
         /**
          * Draw a circle
@@ -313,8 +317,6 @@ var TreeGenerator = function (canvas, opts, settings, potIndex, creds) {
         }
 
         function foliage(x, y, rad, color, dir) {
-            // add money
-            addValue( 0.001 * (tg.settings.leafWorth ? tg.settings.leafWorth : tg.settings.worth));
 
             var saveLineWidth = canvas.ctx.lineWidth; // save line width
             canvas.ctx.lineWidth = tg.settings.leafThickness === 0 ? canvas.ctx.lineWidth : tg.settings.leafThickness;
@@ -324,6 +326,8 @@ var TreeGenerator = function (canvas, opts, settings, potIndex, creds) {
 
             var rotation = dir;
 
+            var sizeToUse = getRandomIntInclusive(tg.settings.leafSize, tg.settings.leafSizeMax || tg.settings.leafSize);
+
             if (tg.settings.downyLeaves) {
                 rotation = getRandom() * tg.settings.downyCoefficient - tg.settings.downyCoefficient / 2;
             }
@@ -332,20 +336,62 @@ var TreeGenerator = function (canvas, opts, settings, potIndex, creds) {
 
             switch (tg.settings.leafType) {
                 case 'mushroom':
-                    canvas.ctx.ellipse(x, y, tg.settings.leafSize, tg.settings.leafSize, Math.PI+rotation, 0, Math.PI, false);
+                    canvas.ctx.ellipse(x, y, sizeToUse, sizeToUse, Math.PI+rotation, 0, Math.PI, false);
                     break;
                 case 'thin':
-                    // canvas.ctx.ellipse(x, y, rad * tg.settings.leafSize, rad * tg.settings.leafSize, rotation + 3, 1, 2, false);
-                    canvas.ctx.ellipse(x, y, Math.sqrt(rad) * tg.settings.leafSize / 5, Math.sqrt(rad) * tg.settings.leafSharpness * tg.settings.leafSize, rotation, 0, Math.PI, false);
+                    // canvas.ctx.ellipse(x, y, rad * sizeToUse, rad * sizeToUse, rotation + 3, 1, 2, false);
+                    canvas.ctx.ellipse(x, y, Math.sqrt(rad) * sizeToUse / 5, Math.sqrt(rad) * tg.settings.leafSharpness * sizeToUse, rotation, 0, Math.PI, false);
+                    break;
+                case 'oval':
+                    var ovalRadiusX = Math.sqrt(rad) * sizeToUse / 5;
+                    var ovalRadiusY = Math.sqrt(rad) * tg.settings.leafSharpness * sizeToUse / 5;
+                    var ovalCenterX = x + Math.sin(rotation) * ovalRadiusY;
+                    var ovalCenterY = y - Math.cos(rotation) * ovalRadiusY;
+                    canvas.ctx.ellipse(ovalCenterX, ovalCenterY, ovalRadiusX, ovalRadiusY, rotation, 0, Math.PI * 2, false);
+                    break;
+                case 'lobed':
+                    var lobedScale = Math.sqrt(rad) * sizeToUse / 5;
+                    var lobedSharpness = Math.max(0.25, Number(tg.settings.leafSharpness) || 1);
+                    var lobedPointScale = Math.max(0.65, Math.min(1.8, Math.sqrt(lobedSharpness)));
+                    canvas.ctx.translate(x, y);
+                    canvas.ctx.rotate(rotation);
+                    canvas.ctx.scale(lobedPointScale, lobedPointScale);
+                    canvas.ctx.translate(0, -1.25 * lobedScale);
+                    canvas.ctx.moveTo(0, 1.25 * lobedScale);
+                    canvas.ctx.lineTo(-0.12 * lobedScale, 0.72 * lobedScale);
+                    canvas.ctx.lineTo(-0.75 * lobedScale, 0.9 * lobedScale);
+                    canvas.ctx.lineTo(-0.58 * lobedScale, 0.35 * lobedScale);
+                    canvas.ctx.lineTo(-1.4 * lobedScale, 0.4 * lobedScale);
+                    canvas.ctx.lineTo(-0.95 * lobedScale, -0.15 * lobedScale);
+                    canvas.ctx.lineTo(-1.55 * lobedScale, -0.55 * lobedScale);
+                    canvas.ctx.lineTo(-0.55 * lobedScale, -0.52 * lobedScale);
+                    canvas.ctx.lineTo(-0.7 * lobedScale, -1.15 * lobedScale);
+                    canvas.ctx.lineTo(0, -0.7 * lobedScale);
+                    canvas.ctx.lineTo(0.7 * lobedScale, -1.15 * lobedScale);
+                    canvas.ctx.lineTo(0.55 * lobedScale, -0.52 * lobedScale);
+                    canvas.ctx.lineTo(1.55 * lobedScale, -0.55 * lobedScale);
+                    canvas.ctx.lineTo(0.95 * lobedScale, -0.15 * lobedScale);
+                    canvas.ctx.lineTo(1.4 * lobedScale, 0.4 * lobedScale);
+                    canvas.ctx.lineTo(0.58 * lobedScale, 0.35 * lobedScale);
+                    canvas.ctx.lineTo(0.75 * lobedScale, 0.9 * lobedScale);
+                    canvas.ctx.lineTo(0.12 * lobedScale, 0.72 * lobedScale);
+                    canvas.ctx.closePath();
                     break;
                 default:
-                    // canvas.ctx.ellipse(x, y, Math.sqrt(rad) * tg.settings.leafSize, Math.sqrt(rad) * 5 * tg.settings.leafSize, rotation, 0, Math.PI, false);
-                    canvas.ctx.ellipse(x, y, Math.sqrt(rad) * tg.settings.leafSize, Math.sqrt(rad) * tg.settings.leafSharpness * tg.settings.leafSize, rotation, 0, Math.PI, false);
+                    // canvas.ctx.ellipse(x, y, Math.sqrt(rad) * sizeToUse, Math.sqrt(rad) * 5 * sizeToUse, rotation, 0, Math.PI, false);
+                    canvas.ctx.ellipse(x, y, Math.sqrt(rad) * sizeToUse, Math.sqrt(rad) * tg.settings.leafSharpness * sizeToUse, rotation, 0, Math.PI, false);
                     break;
+            }
+            if (tg.settings.leafWorth){
+                addValue( 1 * tg.settings.leafWorth);
             }
 
             canvas.ctx.lineWidth = saveLineWidth;
             canvas.ctx.restore(); // restore to original state
+            if (tg.settings.fillColor) {
+                canvas.ctx.fillStyle = tg.settings.fillColor;
+                canvas.ctx.fill();
+            }
             canvas.ctx.strokeStyle = color;
             canvas.ctx.stroke();
         }
@@ -378,31 +424,30 @@ var TreeGenerator = function (canvas, opts, settings, potIndex, creds) {
             // canvas.ctx.rotate(dir * Math.PI);
         }
 
-        var randomIndex = 0;
-        // gets a random number or loads a previously generated one
+        // gets a random number
         function getRandom() {
-            var res;
-            if (progressRecording[potIndex][randomIndex]) {
-                res = progressRecording[potIndex][randomIndex];
-            } else {
-                res = Math.random( );
-                progressRecording[potIndex][randomIndex] = res;
-            }
-            randomIndex++;
-            return res;
+            return Math.random();
         }
-
+        function getRandomIntInclusive(min, max) {
+            min = Math.ceil(min);
+            max = Math.floor(max);
+            return Math.floor(Math.random() * (max - min + 1)) + min;
+        }
         // update value of pot
         function addValue(value) {
+            if (rewinding) {
+                return;
+            }
             // dont add if max already reached
             if (!(gameConfig.values[potIndex] <= tg.settings.maxValue)) {
                 return;
             }
                 // increase local saved value
-                goingValue += value;
+                goingValue += (Math.random()+0.5) * value;
                 // update gameConfig value only if local saved is greater, so that it can support loading
-                if (gameConfig.values[potIndex] < goingValue)
+                if (gameConfig.values[potIndex] < goingValue) {
                     gameConfig.values[potIndex] = goingValue;
+                }
         }
 
         return tg;

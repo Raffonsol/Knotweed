@@ -58,6 +58,14 @@
         /*background-color: #0099FF;*/
     }
 
+    .planter-row {
+        display: flex;
+        justify-content: flex-start;
+        align-items: center;
+        gap: 8px;
+        min-height: 24px;
+    }
+
     .plantMenu {
         right: 0;
         float: right;
@@ -75,9 +83,58 @@
         flex-wrap: wrap;
         justify-content: flex-start;
     }
-    #saveBttn {
-        bottom: 0;
-        position: absolute;
+    #inventory {
+        border: 1px solid green;
+        margin-bottom: 5px;
+        display: flex;
+        flex-direction: row;
+        flex-wrap: wrap;
+    }
+    #inventory > button {
+        min-width: 50%;
+        background-color: #8bf;
+        border:2px solid green;
+        border-radius: 5px;
+    }
+    .shop {
+        border: 1px solid green;
+        background-color: rgb(102, 59, 36);
+        margin-top: 5px;
+        display: flex;
+        flex-direction: column;
+    }
+    .shop > button {
+        width: 70%;
+        background-color: #8bf;
+        border:2px solid green;
+        border-radius: 5px;
+    }
+    .seed-offer {
+        display: flex;
+        align-items: center;
+        gap: 4px;
+        width: 100%;
+    }
+    .seed-offer > button:first-child {
+        flex: 1;
+        background-color: #8bf;
+        border: 2px solid green;
+        border-radius: 5px;
+    }
+    .favorite-button {
+        width: 28px;
+        padding: 0;
+        color: #777;
+        background: transparent;
+        border: 0;
+        font-size: 18px;
+        cursor: pointer;
+    }
+    .favorite-button:hover {
+        color: #d9c86c;
+    }
+    .favorite-button.active {
+        color: #ffd700;
     }
 </style>
 
@@ -91,93 +148,19 @@
     </div>
     <br>
     <div> SHOP
-        <div id="seedShop"></div>
-        <div id="potShop"></div>
-        <div id="upgradeShop"></div>
+        <label><input type="checkbox" id="autoPlant"> (auto-plant)</label>
+        <div id="seedShop" class="shop"></div>
+        <div id="potShop" class="shop"></div>
+        <div id="upgradeShop" class="shop"></div>
     </div>
-    <button id="saveBttn" onclick="reset()">Reset</button>
 </div>
 
-<div id="gameBox">
-    <div class="cube" id="cube0">
-        <canvas width="250%" height="300%" id="bg0" style="color:#09F"></canvas>
-        <div class="rectangle pot"></div>
-        <div class="trapezoid pot"></div>
-        Value: <span id="value0">0</span>
-        <button onclick="sell(0)">Sell</button>
-        <span id="plantName0"></span>
-    </div>
-    <div class="cube" id="cube1">
-        <canvas width="250%" height="300%" id="bg1" style="color:#09F"></canvas>
-        <div class="rectangle pot"></div>
-        <div class="trapezoid pot"></div>
-        Value: <span id="value1">0</span>
-        <button onclick="sell(1)">Sell</button>
-        <span id="plantName1"></span>
-    </div>
-    <div class="cube" id="cube2">
-        <canvas width="250%" height="300%" id="bg2" style="color:#09F"></canvas>
-        <div class="rectangle pot"></div>
-        <div class="trapezoid pot"></div>
-        Value: <span id="value2">0</span>
-        <button onclick="sell(2)">Sell</button>
-        <span id="plantName2"></span>
-    </div>
-    <div class="cube" id="cube3">
-        <canvas width="250%" height="300%" id="bg3" style="color:#09F"></canvas>
-        <div class="rectangle pot"></div>
-        <div class="trapezoid pot"></div>
-        Value: <span id="value3">0</span>
-        <button onclick="sell(3)">Sell</button>
-        <span id="plantName3"></span>
-    </div>
-    <br>
-    <div class="cube" id="cube4">
-        <canvas width="250%" height="300%" id="bg4" style="color:#09F"></canvas>
-        <div class="rectangle pot"></div>
-        <div class="trapezoid pot"></div>
-        Value: <span id="value4">0</span>
-        <button onclick="sell(4)">Sell</button>
-        <span id="plantName4"></span>
-    </div>
-    <div class="cube" id="cube5">
-        <canvas width="250%" height="300%" id="bg5" style="color:#09F"></canvas>
-        <div class="rectangle pot"></div>
-        <div class="trapezoid pot"></div>
-        Value: <span id="value5">0</span>
-        <button onclick="sell(5)">Sell</button>
-        <span id="plantName5"></span>
-    </div>
-    <div class="cube" id="cube6">
-        <canvas width="250%" height="300%" id="bg6" style="color:#09F"></canvas>
-        <div class="rectangle pot"></div>
-        <div class="trapezoid pot"></div>
-        Value: <span id="value6">0</span>
-        <button onclick="sell(6)">Sell</button>
-        <span id="plantName6"></span>
-    </div>
-    <div class="cube" id="cube7">
-        <canvas width="250%" height="300%" id="bg7" style="color:#09F"></canvas>
-        <div class="rectangle pot"></div>
-        <div class="trapezoid pot"></div>
-        Value: <span id="value7">0</span>
-        <button onclick="sell(7)">Sell</button>
-        <span id="plantName7"></span>
-    </div>
-    <div class="cube" id="cube8">
-        <canvas width="250%" height="300%" id="bg8" style="color:#09F"></canvas>
-        <div class="rectangle pot"></div>
-        <div class="trapezoid pot"></div>
-        Value: <span id="value8">0</span>
-        <button onclick="sell(8)">Sell</button>
-        <span id="plantName8"></span>
-    </div>
-</div>
+<div id="gameBox"></div>
 <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.2.1/jquery.min.js"></script>
 <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/dat-gui/0.6.5/dat.gui.min.js"></script>
 <script type="text/javascript" src="src/TreeGenerator.js"></script>
 <script type="text/javascript" src="src/GameOverlord.js"></script>
-<script type="text/javascript" src="src/confs.js"></script>
+<script type="text/javascript" src="src/seeds.js"></script>
 <script type="text/javascript">
     $(document).ready(function () {
         preGame();
